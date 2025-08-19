@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find Mama Hen — SVG v9 (Progress Persists)</title>
+<style>
+  :root{
+    --sky1:#bfe6ff; --sky2:#8cc7ff; --field:#9adf76; --field2:#6bbb49;
+    --ink:#0b1a28; --muted:#4a5a6b; --good:#22c55e; --bad:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;color:var(--ink);
+       background:linear-gradient(180deg,var(--sky1),var(--sky2) 65%,var(--field) 65%,var(--field2) 100%);overflow:hidden}
+  .app{max-width:1100px;margin:0 auto;padding:12px 12px 48px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  h1{font-size:clamp(22px,3vw,32px);margin:6px 0}
+  .hud{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .pill{background:rgba(255,255,255,.8);border:1px solid #0001;border-radius:999px;padding:6px 10px;font-weight:800;display:flex;gap:6px;align-items:center}
+  .btn{appearance:none;border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;
+       background:linear-gradient(180deg,#ffe082,#f6c453);color:#462c00;box-shadow:0 6px 14px #0002,inset 0 1px 0 #fff9}
+  .btn.small{padding:6px 10px;border-radius:10px;font-size:13px}
+  .btn.ghost{background:transparent;border:1px solid #0003;color:#123}
+  .card{background:rgba(255,255,255,.7);border:1px solid #0002;border-radius:16px;padding:12px 14px;margin-top:12px;backdrop-filter:blur(6px)}
+
+  #field{position:relative;height:50vh;min-height:420px;border-radius:16px;overflow:hidden;border:1px solid #0002;background:transparent}
+  .fullscreen #field{position:fixed;inset:0;height:100vh;min-height:100vh;border-radius:0;z-index:20;
+                     background:linear-gradient(180deg,var(--sky1),var(--sky2) 65%,var(--field) 65%,var(--field2) 100%)}
+  .fullscreen .fsHide{display:none!important}
+  #exitFS{display:none;position:fixed;right:14px;top:14px;z-index:40;background:#0008;border:1px solid #fff5;color:#fff;border-radius:999px;padding:10px 12px;font-weight:900;cursor:pointer}
+  .fullscreen #exitFS{display:block}
+  .ground{position:absolute;left:0;right:0;bottom:0;height:14vh;min-height:100px;background:
+          repeating-linear-gradient(45deg,#00000008 0 10px,#ffffff14 10px 20px),
+          linear-gradient(180deg,var(--field),var(--field2))}
+
+  .sprite{position:absolute;transform:translate(-50%,-50%) scale(var(--scale,1));user-select:none;touch-action:none}
+  svg{display:block}
+  .qtag{position:absolute; transform:translate(-50%,0); font-weight:900; font-size:22px; color:#1b1b1b;
+        text-shadow:0 1px 0 #fff9; padding:2px 8px; border-radius:8px; background:#fffdf2; border:1px solid #0001}
+  .hen .label{position:absolute; left:50%; top:60%; transform:translate(-50%,-50%); font-weight:900; font-size:22px; color:#1b1b1b; text-shadow:0 1px 0 #fff9}
+  .hug{animation:hug .6s ease forwards}
+  @keyframes hug{0%{transform:translate(-50%,-50%) scale(var(--scale,1))}50%{transform:translate(-50%,-50%) scale(calc(var(--scale,1) * 1.06))}100%{transform:translate(-50%,-50%) scale(var(--scale,1))}}
+  .shake{animation:shake .45s ease}
+  @keyframes shake{0%,100%{transform:translate(-50%,-50%) scale(var(--scale,1))}25%{transform:translate(calc(-50% - 8px),-50%) scale(var(--scale,1))}75%{transform:translate(calc(-50% + 8px),-50%) scale(var(--scale,1))}}
+
+  .controls{position:fixed;inset:0;z-index:35;pointer-events:none}
+  .pad{position:absolute;bottom:20px;width:35%;height:28%;pointer-events:auto}
+  .left{left:0}.right{right:0}
+  .pad button{width:100%;height:100%;opacity:0}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:50;background:#0008;color:#fff;padding:8px 12px;border-radius:10px;border:1px solid #fff3;opacity:0;transition:opacity .25s, transform .25s;pointer-events:none}
+  .toast.show{opacity:1;transform:translate(-50%,-4px)}
+  .dead{filter:grayscale(.7) brightness(.85)}
+  .meter{height:10px;border-radius:999px;background:#ffffffaa;border:1px solid #0002;overflow:hidden}
+  .meter>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#22c55e,#3b82f6)}
+
+  .ring{display:flex;align-items:center;gap:8px}
+  .ring svg{width:44px;height:44px}
+  .ring .label{font-weight:800}
+
+  .celebrate, .dropfx{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:60}
+  .confetti{position:absolute;font-size:20px;will-change:transform,opacity}
+  .down{position:absolute;font-size:22px;will-change:transform,opacity}
+</style>
+</head>
+<body>
+<div class="app">
+  <button id="exitFS" title="Back to menu">✖</button>
+  <header class="fsHide">
+    <h1>🐣 Find <b>Mama Hen</b> — Times Table Adventure (SVG v9)</h1>
+    <div class="hud">
+      <div class="pill">🪙 <span id="coins">0</span></div>
+      <div class="pill">🔥 <span id="streak">0</span></div>
+      <div class="pill">📈 Table <b id="tblNow">2</b> <span style="margin-left:6px;color:#5b6b7a" id="tblHint"></span></div>
+      <div class="pill ring">
+        <svg viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r="17" fill="none" stroke="#e5e7eb" stroke-width="4"/>
+          <circle id="ringProg" cx="20" cy="20" r="17" fill="none" stroke="#22c55e" stroke-width="4"
+                  stroke-linecap="round" stroke-dasharray="0 999" transform="rotate(-90 20 20)"/>
+        </svg>
+        <span class="label"><span id="ringNum">0</span>/5</span>
+      </div>
+      <div class="pill" style="min-width:180px">Size
+        <div class="meter" style="flex:1;margin-left:8px"><span id="sizeBar"></span></div>
+      </div>
+      <button id="mute" class="btn small">🔊 Sound</button>
+      <button id="reset" class="btn small">Reset</button>
+      <button id="clear" class="btn small ghost">Clear progress</button>
+    </div>
+  </header>
+
+  <section class="card fsHide">
+    <div style="font-weight:800">How it works</div>
+    <div>Starts at <b>2×</b>. Every <b>5 consecutive hugs</b> unlocks the next table. If you return to your starting size after growing, you’ll <b>drop two tables</b> (never below 2×) and restart. <b>Progress is saved</b> between sessions.</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+      <button class="btn" id="play">Play ▶</button>
+      <span id="unlockMsg" style="color:#4a5a6b"></span>
+    </div>
+  </section>
+
+  <section class="game">
+    <div id="field" aria-live="polite">
+      <div class="ground" aria-hidden="true"></div>
+    </div>
+    <div class="card fsHide">
+      <div style="font-weight:800">Goal</div>
+      <div>Grow with hugs (+15%), shrink with pecks (−15%). Death if below baseline; <b>level-drop restart</b> if back at baseline after growing.</div>
+    </div>
+  </section>
+</div>
+
+<div class="controls" id="controls" style="display:none">
+  <div class="pad left"><button aria-label="Move Left"></button></div>
+  <div class="pad right"><button aria-label="Move Right"></button></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="celebrate" id="celebrate"></div>
+<div class="dropfx" id="dropfx"></div>
+
+<script>
+(function(){
+  const $ = s=>document.querySelector(s);
+  const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+
+  // Storage helpers
+  const KEY = 'henProgress:v1';
+  function loadProgress(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return null;
+      return JSON.parse(raw);
+    }catch(e){ return null; }
+  }
+  function saveProgress(data){
+    try{
+      localStorage.setItem(KEY, JSON.stringify(data));
+    }catch(e){ /* ignore quota */ }
+  }
+  function clearProgress(){
+    try{ localStorage.removeItem(KEY); }catch(e){}
+  }
+
+  // Audio
+  const audioCtx = typeof AudioContext!=='undefined' ? new AudioContext() : null;
+  let soundOn = true;
+  function beep(freq=700, dur=.07, type='triangle', vol=.11){
+    if(!audioCtx || !soundOn) return;
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g).connect(audioCtx.destination); o.start(); setTimeout(()=>o.stop(), dur*1000);
+  }
+  function chirp(){beep(980,.06,'triangle',.13); setTimeout(()=>beep(1200,.06,'triangle',.13),70)}
+  function squawk(){beep(260,.12,'square',.15); setTimeout(()=>beep(180,.14,'square',.13),70)}
+
+  // State
+  let round=null, running=false, rafId=null, holdLeft=false, holdRight=false, autoTimer=null, autoDelay=5000;
+  let qTag=null;
+  let startScale=0.55, scale=startScale, MAX_SCALE=1.7, MIN_SCALE=0.35;
+  let currentMax = 2;
+  let highestUnlocked = 2;
+  let consecCorrect = 0;
+  let biasWeight = 0.55;
+  let hasBeenAboveBaseline = false;
+
+  // UI refs
+  const field = $('#field'), controls = $('#controls');
+  const coinsEl = $('#coins'), streakEl = $('#streak'), toast = $('#toast'), sizeBar = $('#sizeBar');
+  const tblNow = $('#tblNow'), tblHint = $('#tblHint'), unlockMsg = $('#unlockMsg');
+  const ringNum = $('#ringNum'), ringProg = $('#ringProg');
+  const celebrate = $('#celebrate'), dropfx = $('#dropfx');
+
+  function toastMsg(s,ms=1200){ toast.textContent=s; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), ms); }
+
+  // Confetti
+  function confettiBurst(){
+    for(let i=0;i<36;i++){
+      const d=document.createElement('div');
+      d.className='confetti';
+      d.textContent = ['🎉','✨','💫','⭐','🎊'][rnd(0,4)];
+      const x = Math.random()*window.innerWidth;
+      d.style.left = x+'px'; d.style.top = '-20px'; d.style.opacity='1';
+      celebrate.appendChild(d);
+      const fall = 1200 + Math.random()*900;
+      const drift = (Math.random()*120-60);
+      const start = performance.now();
+      function step(t){
+        const p = Math.min(1,(t-start)/fall);
+        d.style.transform = `translate(${drift*p}px, ${(window.innerHeight+60)*p}px) rotate(${p*720}deg)`;
+        d.style.opacity = (1-p).toFixed(2);
+        if(p<1) requestAnimationFrame(step); else d.remove();
+      }
+      requestAnimationFrame(step);
+    }
+  }
+
+  // Level drop effect
+  function levelDropEffect(from, to){
+    for(let i=0;i<28;i++){
+      const d=document.createElement('div');
+      d.className='down';
+      d.textContent = ['⬇️','🔻','🪶'][rnd(0,2)];
+      const x = Math.random()*window.innerWidth;
+      d.style.left = x+'px'; d.style.top = '-10px'; d.style.opacity='1';
+      dropfx.appendChild(d);
+      const fall = 900 + Math.random()*800;
+      const drift = (Math.random()*80-40);
+      const start = performance.now();
+      function step(t){
+        const p = Math.min(1,(t-start)/fall);
+        d.style.transform = `translate(${drift*p}px, ${(window.innerHeight+40)*p}px) rotate(${p*360}deg)`;
+        d.style.opacity = (1-p).toFixed(2);
+        if(p<1) requestAnimationFrame(step); else d.remove();
+      }
+      requestAnimationFrame(step);
+    }
+    toastMsg(`Level drop: ${from}× → ${to}×`, 1600);
+  }
+
+  // Ring
+  function updateRing(){
+    ringNum.textContent = consecCorrect;
+    const max = 5, C = 2 * Math.PI * 17;
+    const ratio = Math.max(0, Math.min(1, consecCorrect / max));
+    const dash = (C * ratio).toFixed(1);
+    ringProg.setAttribute('stroke-dasharray', `${dash} ${Math.max(0,C-dash).toFixed(1)}`);
+  }
+
+  // Sprites
+  function svgChick(){
+    const el=document.createElement('div'); el.className='sprite chick';
+    el.innerHTML=`<svg width="130" height="120" viewBox="0 0 130 120" aria-hidden="true">
+      <defs><radialGradient id="gY" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#fff7c9"/><stop offset="100%" stop-color="#ffd84d"/></radialGradient></defs>
+      <path d="M40 18 C50 8,65 8,72 18 C62 16,50 18,40 18" fill="#ff6b6b"/>
+      <ellipse cx="60" cy="60" rx="45" ry="38" fill="url(#gY)" stroke="#00000024"/>
+      <ellipse cx="48" cy="62" rx="16" ry="12" fill="#ffe88a" stroke="#00000014"/>
+      <circle cx="70" cy="48" r="5" fill="#1b1b1b"/>
+      <polygon points="86,58 106,64 86,70" fill="#e67e22"/>
+      <line x1="48" y1="92" x2="48" y2="106" stroke="#d47d00" stroke-width="4" stroke-linecap="round"/>
+      <line x1="64" y1="92" x2="64" y2="106" stroke="#d47d00" stroke-width="4" stroke-linecap="round"/>
+    </svg>`;
+    return el;
+  }
+  function svgHen(){
+    const el=document.createElement('div'); el.className='sprite hen';
+    el.innerHTML=`<svg width="160" height="140" viewBox="0 0 160 140" aria-hidden="true">
+      <defs><radialGradient id="gH" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#ffe0e0"/><stop offset="100%" stop-color="#ffb5b5"/></radialGradient></defs>
+      <path d="M60 24 C68 10,88 10,96 24 C90 22,73 26,60 24" fill="#ff4d4d"/>
+      <ellipse cx="100" cy="74" rx="6" ry="10" fill="#ff6b6b"/>
+      <ellipse cx="80" cy="70" rx="54" ry="44" fill="url(#gH)" stroke="#00000028"/>
+      <ellipse cx="60" cy="76" rx="22" ry="16" fill="#ffc9c9" stroke="#00000014"/>
+      <circle cx="92" cy="56" r="5" fill="#1b1b1b"/>
+      <polygon points="110,70 132,76 110,82" fill="#cc6e1a"/>
+      <line x1="70" y1="110" x2="70" y2="126" stroke="#b96a00" stroke-width="5" stroke-linecap="round"/>
+      <line x1="92" y1="110" x2="92" y2="126" stroke="#b96a00" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+    <div class="label"></div>`;
+    return el;
+  }
+
+  // Size
+  function updateSizeBar(){
+    const pct = Math.max(0, Math.min(100, ((scale - startScale) / (MAX_SCALE - startScale)) * 100));
+    sizeBar.style.width = pct + '%';
+  }
+  function applyScale(){
+    if(!round?.chick) return;
+    scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+    if(scale > startScale + 1e-6) hasBeenAboveBaseline = true;
+    round.chick.style.setProperty('--scale', scale);
+    if(qTag){
+      const x = parseFloat(round.chick.style.left);
+      const y = parseFloat(round.chick.style.top);
+      qTag.style.left = x+'px'; qTag.style.top = (y + 54*scale)+'px';
+    }
+    updateSizeBar();
+  }
+
+  // Question selection
+  function pickTable(){
+    if(Math.random() < biasWeight) return currentMax;
+    if(currentMax===2) return 2;
+    const pool=[]; for(let t=2;t<=currentMax;t++) pool.push(t);
+    return pool[rnd(0,pool.length-1)];
+  }
+  function genQ(){
+    const a = pickTable();
+    const b = rnd(1,12);
+    const ans = a*b;
+    const wrongs = new Set();
+    while(wrongs.size<3){
+      const delta = rnd(-10,10);
+      const g = Math.max(1, Math.min(144, ans+delta));
+      if(g!==ans) wrongs.add(g);
+    }
+    const opts = [ans, ...Array.from(wrongs)];
+    for(let i=opts.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [opts[i],opts[j]]=[opts[j],opts[i]]; }
+    return {a,b,ans,options:opts};
+  }
+
+  // Q tag
+  function placeQTag(x,y,text){
+    if(!qTag){ qTag=document.createElement('div'); qTag.className='qtag'; field.appendChild(qTag); }
+    qTag.textContent = text;
+    qTag.style.left = x+'px';
+    qTag.style.top  = (y + 54*scale) + 'px';
+  }
+
+  function hydrateFromStorage(){
+    const s = loadProgress();
+    if(!s) return;
+    highestUnlocked = Math.min(12, Math.max(2, s.highestUnlocked||2));
+    currentMax = Math.min(highestUnlocked, Math.max(2, s.currentMax||highestUnlocked));
+    tblNow.textContent = currentMax;
+    tblHint.textContent = currentMax<12 ? `(unlock ${currentMax+1}× after 5 hugs)` : '(all tables unlocked)';
+    unlockMsg.textContent = `Progress loaded (up to ${highestUnlocked}×)`;
+    setTimeout(()=> unlockMsg.textContent = '', 1600);
+  }
+  function persist(){
+    saveProgress({ highestUnlocked, currentMax });
+  }
+
+  function hardResetToTwo(){
+    // Full reset to 2× and clear storage values to baseline 2×
+    scale = startScale; hasBeenAboveBaseline = false;
+    consecCorrect = 0; currentMax = 2; highestUnlocked = Math.max(highestUnlocked, 2); biasWeight = 0.55;
+    round = {coins:0, streak:0, q:null, chick:null, hens:[], landing:false};
+    coinsEl.textContent='0'; streakEl.textContent='0';
+    updateSizeBar(); updateRing();
+    autoDelay = 5000;
+    tblNow.textContent = currentMax;
+    tblHint.textContent = '(unlock 3× after 5 hugs)';
+    unlockMsg.textContent = '';
+    persist();
+  }
+
+  function softRestartWithDrop(){
+    // Restart at two levels lower than highestUnlocked, floor 2×
+    const from = highestUnlocked;
+    const to = Math.max(2, highestUnlocked - 2);
+    currentMax = to;
+    scale = startScale; hasBeenAboveBaseline = false;
+    consecCorrect = 0; biasWeight = 0.6;
+    round = {coins:0, streak:0, q:null, chick:null, hens:[], landing:false};
+    coinsEl.textContent='0'; streakEl.textContent='0';
+    updateSizeBar(); updateRing();
+    autoDelay = 5000;
+    tblNow.textContent = currentMax;
+    tblHint.textContent = currentMax<12 ? `(unlock ${currentMax+1}× after 5 hugs)` : '(all tables unlocked)';
+    unlockMsg.textContent = `Restarted at ${currentMax}× (−2 levels)`;
+    levelDropEffect(from, to);
+    persist();
+  }
+
+  function start(first=false){
+    document.body.classList.add('fullscreen');
+    controls.style.display='block';
+    field.querySelectorAll('.sprite,.fx').forEach(n=>n.remove());
+    if(qTag){ qTag.remove(); qTag=null; }
+    if(first){
+      // First start: load any stored progress; if none, start at 2×
+      hydrateFromStorage();
+    }else{
+      softRestartWithDrop();
+    }
+    nextQuestion();
+    running = true;
+    loop();
+  }
+
+  function endRound(msg){
+    running=false; cancelAnimationFrame(rafId); clearTimeout(autoTimer);
+    toastMsg(msg, 1500);
+  }
+
+  function nextQuestion(){
+    clearTimeout(autoTimer);
+    field.querySelectorAll('.sprite,.fx').forEach(n=>n.remove());
+    if(qTag){ qTag.remove(); qTag=null; }
+    round.q = genQ();
+    const w = field.clientWidth, h = field.clientHeight;
+    // Hens
+    const yH = h*0.82;
+    const xs = [0.12,0.36,0.64,0.88].map(p=>Math.round(w*p));
+    round.hens = round.q.options.map((val,i)=>{
+      const el = svgHen(); field.appendChild(el);
+      el.style.left = xs[i]+'px'; el.style.top = yH+'px';
+      el.querySelector('.label').textContent = val;
+      return {el, val, correct: val===round.q.ans};
+    });
+    // Chick
+    round.chick = svgChick(); field.appendChild(round.chick);
+    const cx = w/2, cy = h*0.18;
+    round.chick.style.left = cx+'px'; round.chick.style.top = cy+'px';
+    applyScale();
+    placeQTag(cx, cy, `${round.q.a} × ${round.q.b}`);
+    round.landing=false;
+    autoTimer = setTimeout(()=>{ if(!round.landing) doDrop(true); }, autoDelay);
+    autoDelay = Math.max(2500, autoDelay - 150);
+  }
+
+  // Movement
+  function loop(){
+    rafId = requestAnimationFrame(loop);
+    if(!running) return;
+    const c=round?.chick; if(!c) return;
+    const w = field.clientWidth; const dt = 1/60;
+    let x = parseFloat(c.style.left);
+    if(holdLeft) x -= 440*dt;
+    if(holdRight) x += 440*dt;
+    x = Math.max(70, Math.min(w-70, x));
+    c.style.left = x+'px';
+    if(qTag){
+      const y = parseFloat(c.style.top);
+      qTag.style.left = x+'px'; qTag.style.top  = (y + 54*scale)+'px';
+    }
+  }
+
+  // Input
+  function bindHold(btn, setter){
+    const on = ()=>{ setter(true); if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); };
+    const off = ()=>{ setter(false); };
+    btn.addEventListener('touchstart', on, {passive:true});
+    btn.addEventListener('touchend', off); btn.addEventListener('touchcancel', off);
+    btn.addEventListener('mousedown', on); btn.addEventListener('mouseup', off); btn.addEventListener('mouseleave', off);
+  }
+  bindHold(document.querySelector('.pad.left button'), v=>holdLeft=v);
+  bindHold(document.querySelector('.pad.right button'), v=>holdRight=v);
+  document.addEventListener('keydown', e=>{ if(e.key==='ArrowLeft') holdLeft=true; if(e.key==='ArrowRight') holdRight=true; });
+  document.addEventListener('keyup', e=>{ if(e.key==='ArrowLeft') holdLeft=false; if(e.key==='ArrowRight') holdRight=false; });
+
+  // Drop
+  function doDrop(){
+    if(round.landing) return;
+    round.landing=true; clearTimeout(autoTimer);
+    const c = round.chick; const h = field.clientHeight; const endY = h*0.8; const startY = parseFloat(c.style.top);
+    const start = performance.now(); const D = 1900;
+    function step(t){
+      const p = Math.min(1,(t-start)/D);
+      const e = p*p;
+      const y = startY + (endY-startY)*e;
+      c.style.top = y+'px';
+      if(p<1) requestAnimationFrame(step); else resolveLanding();
+    }
+    requestAnimationFrame(step);
+  }
+
+  function nearestHen(){
+    const cx = parseFloat(round.chick.style.left);
+    let best=null,bd=1e9;
+    for(const h of round.hens){
+      const x = parseFloat(h.el.style.left); const d = Math.abs(cx-x);
+      if(d<bd){bd=d; best=h;}
+    }
+    return best;
+  }
+
+  function fxHearts(x,y){
+    for(let i=0;i<6;i++){
+      const s=document.createElement('div'); s.className='fx'; s.textContent='💖'; s.style.position='absolute';
+      s.style.left=x+'px'; s.style.top=y+'px'; s.style.transform='translate(-50%,-50%)'; s.style.fontSize=(18+rnd(0,6))+'px';
+      field.appendChild(s);
+      const dy = -(30+rnd(0,30)), dx = rnd(-20,20); let a=1,t=0;
+      const id=setInterval(()=>{ t+=1; a-=.02; s.style.opacity=a.toFixed(2); s.style.left=(x+dx*(t/40))+'px'; s.style.top=(y+dy*(t/40))+'px';
+        if(a<=0){ clearInterval(id); s.remove(); }},16);
+    }
+  }
+
+  function unlockIfReady(){
+    if(consecCorrect>=5 && currentMax<12){
+      consecCorrect = 0;
+      currentMax++; highestUnlocked = Math.max(highestUnlocked, currentMax);
+      tblNow.textContent = currentMax;
+      biasWeight = 0.6;
+      unlockMsg.textContent = `Unlocked ${currentMax}×! Practising it now.`;
+      tblHint.textContent = currentMax<12 ? `(unlock ${currentMax+1}× after 5 hugs)` : '(all tables unlocked)';
+      confettiBurst();
+      toastMsg(`Unlocked ${currentMax}×!`, 1200);
+      setTimeout(()=>{ unlockMsg.textContent=''; }, 2500);
+      persist();
+    }
+    updateRing();
+  }
+
+  function resolveLanding(){
+    const mom = nearestHen();
+    round.chick.style.left = mom.el.style.left;
+    if(qTag){ qTag.style.left = mom.el.style.left; }
+    if(mom.correct){
+      chirp(); round.chick.classList.add('hug'); mom.el.classList.add('hug');
+      fxHearts(parseFloat(mom.el.style.left), parseFloat(mom.el.style.top)-48);
+      round.coins=(round.coins||0)+3; coinsEl.textContent=round.coins;
+      round.streak=(round.streak||0)+1; streakEl.textContent=round.streak;
+      consecCorrect++; updateRing();
+      // grow +15%
+      scale = Math.min(MAX_SCALE, scale * 1.15);
+      applyScale();
+      unlockIfReady();
+      setTimeout(nextQuestion, 900);
+    }else{
+      squawk(); mom.el.classList.add('shake'); round.streak=0; streakEl.textContent=0;
+      consecCorrect = 0; updateRing();
+      // shrink −15%
+      scale = Math.max(MIN_SCALE, scale * 0.85);
+      applyScale();
+      const x=parseFloat(mom.el.style.left), y=parseFloat(mom.el.style.top)-50;
+      const p=document.createElement('div'); p.textContent='Peck!'; p.style.position='absolute'; p.style.left=x+'px'; p.style.top=y+'px';
+      p.style.transform='translate(-50%,-50%)'; p.style.fontWeight='900'; p.style.color='#c00'; field.appendChild(p);
+      setTimeout(()=> p.remove(), 650);
+      // Level-drop restart if back to baseline after having grown
+      if(hasBeenAboveBaseline && Math.abs(scale - startScale) <= 0.01){
+        softRestartWithDrop();
+        nextQuestion();
+        return;
+      }
+      // Death if below baseline
+      if(scale < startScale - 1e-6){
+        const startT = performance.now();
+        const init = scale;
+        function fade(t){
+          const pr = Math.min(1,(t-startT)/700);
+          const s = Math.max(0.35, init*(1-0.35*pr));
+          round.chick.style.setProperty('--scale', s);
+          round.chick.style.opacity = (1-0.6*pr).toFixed(2);
+          if(pr<1) requestAnimationFrame(fade); else endRound('Too tiny — game over.');
+        }
+        requestAnimationFrame(fade);
+      }else{
+        setTimeout(()=> nextQuestion(), 800);
+      }
+    }
+  }
+
+  // Buttons
+  $('#play').onclick=()=>{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); start(true); };
+  $('#reset').onclick=()=>{ hardResetToTwo(); nextQuestion(); };
+  $('#clear').onclick=()=>{
+    clearProgress();
+    highestUnlocked = 2; currentMax = 2;
+    toastMsg('Progress cleared', 1000);
+  };
+  $('#mute').onclick=()=>{ soundOn=!soundOn; $('#mute').textContent = soundOn? '🔊 Sound':'🔇 Muted'; };
+  $('#exitFS').onclick=()=>{
+    running=false; cancelAnimationFrame(rafId); clearTimeout(autoTimer);
+    document.body.classList.remove('fullscreen'); controls.style.display='none';
+    field.querySelectorAll('.sprite,.fx').forEach(n=>n.remove());
+    if(qTag){ qTag.remove(); qTag=null; }
+  };
+
+  // iPad audio unlock
+  document.body.addEventListener('touchstart', ()=>{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }, {passive:true});
+})();</script>
+</body>
+</html>
