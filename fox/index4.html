@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fox World — Overworld + Stickers</title>
+<style>
+  :root{
+    --sky1:#bfe6ff; --sky2:#8cc7ff; --field:#9adf76; --field2:#6bbb49; --ink:#0b1a28;
+    --muted:#4a5a6b; --card:#ffffffcc; --shadow:0 8px 24px #00000022;
+  }
+  *{box-sizing:border-box} html,body{height:100%} body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial; color:var(--ink);
+    background:linear-gradient(180deg,var(--sky1),var(--sky2) 65%,var(--field) 65%,var(--field2))
+  }
+  .app{max-width:1100px;margin:0 auto;padding:12px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  h1{font-size: clamp(22px,3vw,32px); margin:6px 0}
+  .btn{appearance:none;border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;
+       background:linear-gradient(180deg,#ffe082,#f6c453);color:#462c00;box-shadow:var(--shadow)}
+  .btn.ghost{background:#ffffffaa;border:1px solid #0002;color:#123}
+  .pill{background:#fff;border:1px solid #0002;border-radius:999px;padding:6px 10px;font-weight:800;display:flex;gap:6px;align-items:center;box-shadow:0 4px 10px #0002}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .card{background:var(--card);border:1px solid #0002;border-radius:16px;padding:12px;box-shadow:var(--shadow)}
+  .hide{display:none!important}
+
+  /* Screens */
+  .screen{margin-top:12px}
+  #screenMap .biomes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .biome{border-radius:16px;padding:14px;border:1px solid #0002;background:#fffdf6;position:relative;overflow:hidden}
+  .biome h3{margin:0 0 4px}
+  .goal{font-size:14px;color:#355;opacity:.85}
+  .badge{position:absolute;right:10px;top:10px;background:#0009;color:#fff;border-radius:10px;padding:4px 7px;font-size:12px}
+
+  /* Play field */
+  #field{position:relative;height:58vh;min-height:460px;border-radius:18px;overflow:hidden;border:1px solid #0002;background:transparent;touch-action:none}
+  .ground{position:absolute;left:0;right:0;bottom:0;height:14vh;min-height:110px;background:
+    repeating-linear-gradient(45deg,#0001 0 10px,#fff2 10px 20px),
+    linear-gradient(180deg,var(--field),var(--field2))}
+  .sprite{position:absolute;transform:translate(-50%,-50%) scale(var(--scale,1));user-select:none}
+  svg{display:block}
+  .qtag{position:absolute;transform:translate(-50%,-50%);font-weight:900;font-size:22px;color:#1b1b1b;
+        text-shadow:0 1px 0 #fff9;padding:6px 12px;border-radius:12px;background:#fffdf2;border:1px solid #0001}
+  .mom .label{position:absolute; left:50%; top:64%; transform:translate(-50%,-50%); font-weight:900; font-size:22px; color:#1b1b1b; text-shadow:0 1px 0 #fff9}
+
+  .hug{animation:hug .6s ease forwards}
+  @keyframes hug{0%{transform:translate(-50%,-50%) scale(var(--scale,1))}30%{transform:translate(-50%,-50%) scale(calc(var(--scale,1)*1.06))}100%{transform:translate(-50%,-50%) scale(var(--scale,1))}}
+  .shake{animation:shake .45s ease}
+  @keyframes shake{0%,100%{transform:translate(-50%,-50%) scale(var(--scale,1))}30%{transform:translate(calc(-50% - 8px),-50%) scale(var(--scale,1))}70%{transform:translate(calc(-50% + 8px),-50%) scale(var(--scale,1))}}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:50;background:#111c;color:#fff;
+         border-radius:12px;padding:8px 12px;box-shadow:0 8px 26px #0005;opacity:0;transition:opacity .25s, transform .25s;pointer-events:none}
+  .toast.show{opacity:1;transform:translate(-50%,-4px)}
+
+  .meter{height:10px;border-radius:999px;background:#ffffffaa;border:1px solid #0002;overflow:hidden}
+  .meter>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#22c55e,#3b82f6)}
+
+  /* Snake */
+  .snake-seg{
+    position:absolute;width:20px;height:20px;border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, #9be37a, #3c8d2a);
+    box-shadow:0 2px 6px #0003; transform:translate(-50%,-50%); z-index:4;
+  }
+  .baby{z-index:6} .mom{z-index:5}
+
+  /* Edge arrow buttons */
+  .edgeBtn{position:absolute;display:grid;place-items:center;width:72px;height:72px;border-radius:18px;
+           background:#ffffffc0;border:1px solid #0002;box-shadow:0 6px 16px #0003;font-size:34px;font-weight:900;color:#123;user-select:none;cursor:pointer}
+  .edgeBtn:active{transform:translate(-50%,-50%) scale(.96)}
+  #arrowL{left:18px;top:50%;transform:translate(-50%,-50%)} #arrowR{right:18px;top:50%;transform:translate(50%,-50%)}
+  #arrowU{top:18px;left:50%;transform:translate(-50%,-50%)} #arrowD{bottom:18px;left:50%;transform:translate(-50%,50%)}
+
+  /* Den / Stickers */
+  #denWrap{display:grid;grid-template-columns: 380px 1fr; gap:12px}
+  .denScene{background:#fff; border:1px solid #0002; border-radius:16px; padding:10px; box-shadow:var(--shadow); min-height:300px; position:relative}
+  .denFloor{position:absolute; left:10px; right:10px; bottom:10px; height:40%; background:linear-gradient(#e9d7b6,#d5be96); border-radius:12px}
+  .furniture{position:absolute; bottom:18px; left:50%; transform:translateX(-50%); display:flex; gap:12px}
+  .furn{background:#fff7; border:1px solid #0002; border-radius:10px; padding:8px 10px}
+  .stickerGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+  .sticker{background:#fff;border:1px dashed #0003;border-radius:12px;min-height:78px;display:grid;place-items:center}
+  .sticker.have{border-style:solid; box-shadow:0 6px 16px #0002}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🦊 Fox World — <small style="font-size:14px;color:#4a5a6b">Overworld + Stickers</small></h1>
+    <div class="row">
+      <button class="btn ghost" id="navMap">Map</button>
+      <button class="btn ghost" id="navPlay">Play</button>
+      <button class="btn ghost" id="navDen">Den</button>
+      <div class="pill">Table: <b id="tblNow">2</b>× <span id="tblHint" style="color:#4a5a6b"></span></div>
+      <div class="pill meter" style="width:160px"><span id="sizeBar"></span></div>
+      <button class="btn small" id="mute">🔊 Sound</button>
+    </div>
+  </header>
+
+  <!-- MAP (Story & world) -->
+  <section id="screenMap" class="screen card">
+    <h2 style="margin:6px 0 10px">Overworld Map</h2>
+    <div class="biomes" id="biomes"></div>
+  </section>
+
+  <!-- PLAY (Game field) -->
+  <section id="screenPlay" class="screen card hide">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="row">
+        <div class="pill">Biome: <b id="biomeName">Forest</b></div>
+        <div class="pill">Goal: <span id="goalText"></span></div>
+      </div>
+      <div class="pill">Loot: <span id="lootIcon">🍓</span>×<b id="lootCount">0</b>/<b id="lootGoal">0</b></div>
+    </div>
+    <div id="field">
+      <div class="ground"></div>
+      <div class="edgeBtn" id="arrowL" aria-label="Move left">◀</div>
+      <div class="edgeBtn" id="arrowR" aria-label="Move right">▶</div>
+      <div class="edgeBtn" id="arrowU" aria-label="Move up">▲</div>
+      <div class="edgeBtn" id="arrowD" aria-label="Move down">▼</div>
+    </div>
+  </section>
+
+  <!-- DEN (Progress & rewards) -->
+  <section id="screenDen" class="screen card hide">
+    <h2 style="margin:6px 0 10px">Den & Sticker Book</h2>
+    <div id="denWrap">
+      <div class="denScene">
+        <div class="denFloor"></div>
+        <div class="furniture" id="furniture"></div>
+        <div style="position:absolute;left:12px;top:12px;font-weight:700;color:#4a5a6b">Your cozy den</div>
+      </div>
+      <div>
+        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div class="pill">Stickers: <b id="stickerCount">0</b>/<b id="stickerTotal">0</b></div>
+          <div class="pill">New décor every 5 stickers!</div>
+        </div>
+        <div class="stickerGrid" id="stickerGrid"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const $ = s=>document.querySelector(s);
+  const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+
+  /* ===================== STORY & WORLD ===================== */
+  const BIOMES = [
+    { id:'forest', name:'Forest',  color:'#dff4d8', icon:'🍓', resource:'berries', goalMult:5,  hint:'Collect groups in the woods.' },
+    { id:'river',  name:'River',   color:'#d7ecff', icon:'🐟', resource:'scales', goalMult:6,  hint:'Wade for shiny fish scales.' },
+    { id:'mount',  name:'Mountain',color:'#f6efe2', icon:'🪨', resource:'stones', goalMult:7,  hint:'Climb and gather stones.' },
+    { id:'snow',   name:'Snow',    color:'#eef7ff', icon:'❄️', resource:'flakes', goalMult:8,  hint:'Chase snowflakes in gusts.' },
+  ];
+  let currentBiome = BIOMES[0];
+
+  function renderMap(){
+    const wrap = $('#biomes'); wrap.innerHTML='';
+    BIOMES.forEach((b,i)=>{
+      const el=document.createElement('div'); el.className='biome';
+      el.style.background=b.color;
+      el.innerHTML=`
+        <span class="badge">${b.icon} ${b.name}</span>
+        <h3>${b.name}</h3>
+        <div class="goal">Goal: collect <b>${b.goalMult}</b> groups of your current table</div>
+        <p style="color:#4a5a6b;margin:.4em 0">${b.hint}</p>
+        <button class="btn">Play this</button>
+      `;
+      el.querySelector('button').onclick=()=>{ startRun(b); };
+      wrap.appendChild(el);
+    });
+  }
+
+  /* ===================== TABLES & QUESTIONS ===================== */
+  const ORDER = [2,3,1,10,5,11,4,6,7,8,9,12];
+  const POS_OF_11 = ORDER.indexOf(11);
+  const KEY = 'foxWorld:v1';
+
+  let currentPos = 0, highestPos = 0, sublevel = 1;
+  let soundOn = true, streak = 0;
+
+  function isAfter11(){ return currentPos>POS_OF_11; }
+  function currentNumOptions(){ return isAfter11()? Math.max(1,Math.min(4,sublevel)) : 4; }
+  function pickTable(){ if(Math.random()<.6) return ORDER[currentPos]; const u=ORDER.slice(0,highestPos+1||1); return u[rnd(0,u.length-1)]; }
+  function genQ(){
+    const a=pickTable(), b=rnd(1,12), ans=a*b, need=currentNumOptions()-1, wrongs=new Set();
+    while(wrongs.size<need){ const g=Math.max(1,Math.min(144, ans + rnd(-10,10))); if(g!==ans) wrongs.add(g); }
+    const opts=[ans,...wrongs]; for(let i=opts.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [opts[i],opts[j]]=[opts[j],opts[i]]; }
+    return {a,b,ans,options:opts};
+  }
+
+  /* ===================== PROGRESS & REWARDS ===================== */
+  const STICKERS = [
+    {id:'bun',  name:'Bunny',  art:'🐰'}, {id:'owl',  name:'Owl',   art:'🦉'},
+    {id:'hedg', name:'Hedge',  art:'🦔'}, {id:'deer', name:'Deer',  art:'🦌'},
+    {id:'frog', name:'Frog',   art:'🐸'}, {id:'fox',  name:'RedFox',art:'🦊'},
+    {id:'bee',  name:'Bee',    art:'🐝'}, {id:'squa', name:'Squirrel', art:'🐿️'},
+    {id:'fish', name:'Fish',   art:'🐟'}, {id:'snow', name:'Snowman', art:'⛄'},
+  ];
+  let collection = new Set();
+  let decorLevel = 0; // increases every 5 stickers
+
+  function awardSticker(){
+    // Pick a random not-yet-owned; if all owned, pick any
+    const pool = STICKERS.filter(s=>!collection.has(s.id));
+    const pick = (pool.length? pool : STICKERS)[rnd(0,(pool.length?pool:STICKERS).length-1)];
+    collection.add(pick.id);
+    toastMsg(`🏅 New sticker: ${pick.name}!`);
+    if(collection.size % 5 === 0){ decorLevel++; toastMsg('🏠 New den décor unlocked!'); }
+    save(); renderDen();
+  }
+
+  function renderDen(){
+    $('#stickerTotal').textContent = STICKERS.length;
+    $('#stickerCount').textContent = collection.size;
+    const grid = $('#stickerGrid'); grid.innerHTML='';
+    STICKERS.forEach(s=>{
+      const have = collection.has(s.id);
+      const c=document.createElement('div'); c.className='sticker' + (have?' have':'');
+      c.innerHTML = `<div style="font-size:36px">${s.art}</div><div style="font-size:12px;color:#4a5a6b">${s.name}</div>`;
+      grid.appendChild(c);
+    });
+    const furn = $('#furniture'); furn.innerHTML='';
+    // show furniture pieces up to decorLevel (max 4 simple pieces)
+    const pieces = [
+      {id:'rug', art:'🧶 Rug'}, {id:'lamp', art:'🪔 Lamp'}, {id:'plant', art:'🪴 Plant'}, {id:'bed', art:'🛏️ Cozy bed'}
+    ];
+    for(let i=0;i<Math.min(decorLevel, pieces.length); i++){
+      const p=pieces[i]; const el=document.createElement('div'); el.className='furn'; el.textContent=p.art+' '+p.id.toUpperCase();
+      furn.appendChild(el);
+    }
+  }
+
+  /* ===================== AUDIO ===================== */
+  const audioCtx = typeof AudioContext!=='undefined' ? new AudioContext() : null;
+  function beep(freq=700, dur=.07, type='triangle', vol=.11){ if(!audioCtx||!soundOn) return;
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g).connect(audioCtx.destination); o.start(); setTimeout(()=>{ g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur); }, 0); o.stop(audioCtx.currentTime+dur+.01);
+  }
+  const chirp=()=>{beep(900,.07,'triangle',.12); setTimeout(()=>beep(1050,.07,'triangle',.1),60);}
+  const squawk=()=>beep(320,.09,'sawtooth',.15);
+
+  /* ===================== SPRITES (more realistic) ===================== */
+  const BABY_HALF = 60, MAMA_HALF = 74;
+  const startScale = 0.2, MIN_SCALE = 0.16;
+  const MAX_SCALE = Math.min(0.95 * (MAMA_HALF / BABY_HALF), 1.0);
+  let scale = startScale;
+
+  function svgBabyFox(){
+    const el=document.createElement('div'); el.className='sprite baby'; el.style.setProperty('--scale', scale);
+    el.innerHTML=`<svg width="140" height="130" viewBox="0 0 140 130" aria-hidden="true">
+      <defs>
+        <radialGradient id="furB" cx="45%" cy="35%" r="70%"><stop offset="0%" stop-color="#ffd9b3"/><stop offset="100%" stop-color="#f58a2a"/></radialGradient>
+        <linearGradient id="tailB" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f58a2a"/><stop offset="100%" stop-color="#c65c0b"/></linearGradient>
+      </defs>
+      <path d="M92 85 C120 88, 126 102, 110 112 C94 120, 80 110, 84 96 Z" fill="url(#tailB)" stroke="#00000020"/>
+      <ellipse cx="70" cy="74" rx="46" ry="34" fill="url(#furB)" stroke="#00000024"/>
+      <path d="M38 52 C35 40, 49 34, 58 36 L66 42 L74 36 C83 34, 97 40, 94 52 C90 66, 42 66, 38 52 Z" fill="url(#furB)" stroke="#00000020"/>
+      <polygon points="52,36 60,22 66,40" fill="#e56d16"/><polygon points="78,36 72,40 80,22" fill="#e56d16"/>
+      <ellipse cx="58" cy="54" rx="5" ry="5" fill="#1b1b1b"/><ellipse cx="78" cy="54" rx="5" ry="5" fill="#1b1b1b"/>
+      <path d="M63 60 L73 64 L63 68 Z" fill="#fff1e6"/><circle cx="68" cy="66" r="2.6" fill="#1b1b1b"/>
+      <path d="M58 92 C70 88, 80 88, 90 96 C78 104, 62 104, 58 92 Z" fill="#fff3ea" opacity=".95"/>
+      <rect x="50" y="98" width="6" height="12" rx="3" fill="#533118"/><rect x="72" y="98" width="6" height="12" rx="3" fill="#533118"/>
+    </svg>`; return el;
+  }
+  function svgMamaFox(){
+    const el=document.createElement('div'); el.className='sprite mom';
+    el.innerHTML=`<svg width="190" height="170" viewBox="0 0 190 170" aria-hidden="true">
+      <defs>
+        <radialGradient id="furM" cx="45%" cy="35%" r="70%"><stop offset="0%" stop-color="#ffe0bf"/><stop offset="100%" stop-color="#f6932f"/></radialGradient>
+        <linearGradient id="tailM" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f6932f"/><stop offset="100%" stop-color="#c76110"/></linearGradient>
+      </defs>
+      <path d="M118 102 C150 108, 162 126, 142 140 C120 152, 102 138, 108 120 Z" fill="url(#tailM)" stroke="#00000020"/>
+      <ellipse cx="94" cy="96" rx="60" ry="44" fill="url(#furM)" stroke="#00000024"/>
+      <path d="M60 70 C56 54, 74 47, 86 50 L96 58 L106 50 C118 47, 136 54, 132 70 C128 88, 66 88, 60 70 Z" fill="url(#furM)" stroke="#00000020"/>
+      <polygon points="78,50 90,30 98,54" fill="#e56d16"/><polygon points="110,50 102,54 114,30" fill="#e56d16"/>
+      <ellipse cx="86" cy="76" rx="6" ry="6" fill="#1b1b1b"/><ellipse cx="108" cy="76" rx="6" ry="6" fill="#1b1b1b"/>
+      <path d="M92 84 L108 90 L92 96 Z" fill="#fff1e6"/><circle cx="100" cy="92" r="3" fill="#1b1b1b"/>
+      <path d="M80 122 C98 116, 112 116, 128 128 C110 140, 86 140, 80 122 Z" fill="#fff3ea" opacity=".95"/>
+      <rect x="76" y="130" width="8" height="16" rx="4" fill="#533118"/><rect x="102" y="130" width="8" height="16" rx="4" fill="#533118"/>
+    </svg><div class="label">?</div>`; return el;
+  }
+
+  /* ===================== HUD ===================== */
+  const sizeBar = document.querySelector('#sizeBar');
+  function updateSizeBar(){ sizeBar.style.width = ((scale-MIN_SCALE)/(MAX_SCALE-MIN_SCALE))*100 + '%'; }
+  function updateTableHud(){
+    const now=ORDER[currentPos], next=ORDER[currentPos+1]??ORDER[currentPos];
+    $('#tblNow').textContent=now;
+    $('#tblHint').textContent = currentPos<ORDER.length-1 ? `(next: ${next}× after 5 hugs)` : '(all tables done)';
+  }
+
+  /* ===================== PLAY SESSION STATE ===================== */
+  let runLoot = 0, runGoal = 0;
+  function startRun(biome){
+    currentBiome = biome;
+    runLoot = 0;
+    runGoal = biome.goalMult * ORDER[currentPos]; // e.g., 5 groups of current table
+    $('#biomeName').textContent = biome.name;
+    $('#goalText').textContent = `${biome.goalMult} groups of ${ORDER[currentPos]}×`;
+    $('#lootIcon').textContent = biome.icon;
+    $('#lootCount').textContent = '0';
+    $('#lootGoal').textContent = runGoal;
+    showScreen('play');
+    nextRound(); loop();
+  }
+  function addLoot(){
+    const add = ORDER[currentPos];
+    runLoot = Math.min(runGoal, runLoot + add);
+    $('#lootCount').textContent = runLoot;
+    if(runLoot>=runGoal){
+      toastMsg(`🎉 ${currentBiome.name} goal complete!`);
+      awardSticker();
+      // soft reset for another run
+      runLoot = 0; $('#lootCount').textContent = '0';
+    }
+  }
+
+  /* ===================== PLACEMENT & QUESTIONS ===================== */
+  function groundHeight(){ const g = $('#field').querySelector('.ground'); const h= parseFloat(getComputedStyle(g).height)||$('#field').clientHeight*0.14; return Math.max(110,h); }
+  let round = { q:null, baby:null, mamas:[], picking:false };
+  function cornersFor(n){ const all=['tl','tr','br','bl']; if(n>=4) return all; const s=new Set(); while(s.size<n) s.add(all[rnd(0,all.length-1)]); return [...s]; }
+  function posForCorner(c,w,h){ const m=20, gh=groundHeight();
+    if(c==='tl') return {x:m+MAMA_HALF, y:m+MAMA_HALF};
+    if(c==='tr') return {x:w-m-MAMA_HALF, y:m+MAMA_HALF};
+    if(c==='br') return {x:w-m-MAMA_HALF, y:h-gh-m-MAMA_HALF};
+    if(c==='bl') return {x:m+MAMA_HALF, y:h-gh-m-MAMA_HALF};
+    return {x:w/2,y:h/2};
+  }
+
+  let qTag=null;
+  function placeQTag(x,y,t){ if(!qTag){ qTag=document.createElement('div'); qTag.className='qtag'; $('#field').appendChild(qTag);} qTag.textContent=t; qTag.style.left=x+'px'; qTag.style.top=y+'px'; }
+  function clearSprites(){ $('#field').querySelectorAll('.sprite,.qtag,.snake-seg').forEach(n=>n.remove()); qTag=null; }
+
+  function nextRound(){
+    clearSprites();
+    const w=$('#field').clientWidth, h=$('#field').clientHeight;
+    round.q = genQ();
+    const n=currentNumOptions(), cs=cornersFor(n), choices=round.q.options.slice(0,n);
+    round.mamas=[];
+    cs.forEach((c,i)=>{
+      const el=svgMamaFox(); $('#field').appendChild(el);
+      const p=posForCorner(c,w,h); el.style.left=p.x+'px'; el.style.top=p.y+'px';
+      el.querySelector('.label').textContent=choices[i];
+      const obj={el, correct:choices[i]===round.q.ans, x:p.x, y:p.y};
+      round.mamas.push(obj);
+      el.addEventListener('pointerdown', ev=>{ ev.preventDefault(); if(round.picking) return; seek={x:p.x, y:p.y, target:obj}; flash(el); });
+    });
+
+    round.baby=svgBabyFox(); $('#field').appendChild(round.baby);
+    round.baby.style.setProperty('--scale', scale);
+    const cx=w/2, cy=Math.min(h/2, h - groundHeight() - (BABY_HALF*scale) - 40);
+    round.baby.style.left=cx+'px'; round.baby.style.top=cy+'px';
+    placeQTag(cx, cy - 70*scale, `${round.q.a} × ${round.q.b}`);
+    round.picking=false;
+
+    // spawn a snake
+    snakes=[ createSnake(w*0.25, h*0.5, 1, 0, snakeStartLen) ]; snakeCooldown=0; knock=null;
+  }
+  function flash(el){ el.style.filter='brightness(1.05) drop-shadow(0 3px 6px rgba(0,0,0,.15))'; setTimeout(()=>el.style.filter='',160); }
+
+  /* ===================== SNAKES ===================== */
+  const segSpacing = 18, SNAKE_START_LEN = 12, SNAKE_SPEED = 2.2, GROW_BY = 6;
+  let snakeStartLen = SNAKE_START_LEN, snakes = [];
+  function createSnake(x,y,dirX,dirY,len){
+    const segs=[]; for(let i=0;i<len;i++){ const d=document.createElement('div'); d.className='snake-seg'; $('#field').appendChild(d); segs.push({x:x - dirX*i*segSpacing, y:y - dirY*i*segSpacing, el:d}); }
+    return {segs, dir:{x:dirX,y:dirY}, turn:rnd(30,90), speed:SNAKE_SPEED};
+  }
+  function renderSnake(sn){ for(const s of sn.segs){ s.el.style.left=s.x+'px'; s.el.style.top=s.y+'px'; } }
+  function updateSnake(sn){
+    const w=$('#field').clientWidth, h=$('#field').clientHeight, gh=groundHeight();
+    if(sn.turn--<=0){ sn.turn=rnd(30,90); const ang=Math.atan2(sn.dir.y,sn.dir.x)+(Math.random()-0.5)*0.9; sn.dir.x=Math.cos(ang); sn.dir.y=Math.sin(ang); }
+    const head=sn.segs[0];
+    head.x += sn.dir.x*sn.speed; head.y += sn.dir.y*sn.speed;
+    const m=20, L=m, R=w-m, T=m, B=h-gh-m;
+    if(head.x<L){ head.x=L; sn.dir.x*=-1 } if(head.x>R){ head.x=R; sn.dir.x*=-1 }
+    if(head.y<T){ head.y=T; sn.dir.y*=-1 } if(head.y>B){ head.y=B; sn.dir.y*=-1 }
+    for(let i=sn.segs.length-1;i>0;i--){
+      const a=sn.segs[i], b=sn.segs[i-1], dx=b.x-a.x, dy=b.y-a.y, dist=Math.hypot(dx,dy)||.0001, need=segSpacing;
+      if(dist>need){ a.x += (dx/dist)*(dist-need); a.y += (dy/dist)*(dist-need); }
+    }
+    renderSnake(sn);
+  }
+  function growSnake(sn, by=GROW_BY){
+    for(let i=0;i<by;i++){ const last=sn.segs[sn.segs.length-1]; const d=document.createElement('div'); d.className='snake-seg'; $('#field').appendChild(d); sn.segs.push({x:last.x,y:last.y,el:d}); }
+  }
+  function splitIfNeeded(snIndex){
+    const sn = snakes[snIndex]; if(sn.segs.length < 2*snakeStartLen) return;
+    const half = Math.max(8, Math.floor(sn.segs.length/2));
+    const head = sn.segs[0]; const ang = Math.atan2(sn.dir.y, sn.dir.x);
+    const s1 = createSnake(head.x, head.y, Math.cos(ang+0.7), Math.sin(ang+0.7), half);
+    const s2 = createSnake(head.x, head.y, Math.cos(ang-0.7), Math.sin(ang-0.7), half);
+    sn.segs.forEach(s=>s.el.remove()); snakes.splice(snIndex, 1, s1, s2);
+    snakeStartLen = Math.max(SNAKE_START_LEN, half); toastMsg('🐍 The big snake split into two!');
+  }
+
+  /* ===================== INPUTS (arrows & keyboard) ===================== */
+  let keyX=0, keyY=0, seek=null, knock=null, snakeCooldown=0;
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft')keyX=-1; if(e.key==='ArrowRight')keyX=1; if(e.key==='ArrowUp')keyY=-1; if(e.key==='ArrowDown')keyY=1;
+  });
+  document.addEventListener('keyup',e=>{
+    if(['ArrowLeft','ArrowRight'].includes(e.key))keyX=0; if(['ArrowUp','ArrowDown'].includes(e.key))keyY=0;
+  });
+  function bindEdge(btn, dx, dy){
+    const start=()=>{ keyX=dx; keyY=dy; };
+    const stop =()=>{ if(keyX===dx) keyX=0; if(keyY===dy) keyY=0; };
+    btn.addEventListener('pointerdown', e=>{ e.preventDefault(); start(); btn.setAttribute('data-on',''); });
+    btn.addEventListener('pointerup',   stop); btn.addEventListener('pointerleave',stop); btn.addEventListener('lostpointercapture', stop);
+  }
+  bindEdge($('#arrowL'), -1,  0);
+  bindEdge($('#arrowR'),  1,  0);
+  bindEdge($('#arrowU'),  0, -1);
+  bindEdge($('#arrowD'),  0,  1);
+
+  /* ===================== PICK / REACTIONS / ADVANCE ===================== */
+  function clampScale(v){ return clamp(v, MIN_SCALE, MAX_SCALE); }
+  function onPick(t){
+    if(round.picking) return; round.picking=true;
+    const x=t.x, y=t.y; round.baby.style.left=x+'px'; round.baby.style.top=y+'px';
+    placeQTag(x, y - 70*scale, `${round.q.a} × ${round.q.b}`);
+    if(t.correct){
+      chirp(); round.baby.classList.add('hug'); t.el.classList.add('hug');
+      streak++; scale = clampScale(scale * 1.06); round.baby.style.setProperty('--scale', scale); updateSizeBar();
+      addLoot(); // STORY hook: collecting resources
+      if(streak>=5){
+        streak=0;
+        if(currentPos > POS_OF_11 && sublevel < 4){ sublevel++; toastMsg(`Sublevel ${sublevel} unlocked!`); }
+        else if(currentPos < ORDER.length-1){ currentPos++; highestPos=Math.max(highestPos,currentPos); sublevel = (currentPos > POS_OF_11) ? 1 : 1; toastMsg(`Unlocked ${ORDER[currentPos]}×!`); }
+        save(); updateTableHud();
+      }
+      setTimeout(()=>{ seek=null; nextRound(); }, 600);
+    }else{
+      squawk(); t.el.classList.add('shake'); streak=0; scale = clampScale(scale * 0.93); round.baby.style.setProperty('--scale', scale); updateSizeBar();
+      setTimeout(()=>{ seek=null; nextRound(); }, 560);
+    }
+  }
+
+  function trySnakeHit(){
+    if(snakeCooldown>0 || knock) return false;
+    const bx=parseFloat(round.baby.style.left), by=parseFloat(round.baby.style.top), br=BABY_HALF*scale*0.6;
+    for(let i=0;i<snakes.length;i++){
+      const sn=snakes[i];
+      for(const sg of sn.segs){
+        const dx=sg.x-bx, dy=sg.y-by, dist=Math.hypot(dx,dy);
+        if(dist < br+12){
+          const mag = Math.hypot(-dx,-dy)||1; const kx=(-dx/mag)*1.5, ky=(-dy/mag)*1.5;
+          knock={vx:kx, vy:ky, frames:22}; snakeCooldown=28; growSnake(sn); splitIfNeeded(i);
+          scale = clampScale(scale * 0.90); round.baby.style.setProperty('--scale', scale); updateSizeBar();
+          toastMsg('🐍 Boop! Snake grew longer.'); return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /* ===================== LOOP ===================== */
+  function loop(){
+    if(!round.baby) return;
+    snakes.forEach(updateSnake);
+    let NX=keyX, NY=keyY;
+    if(knock && knock.frames>0){ NX=knock.vx; NY=knock.vy; knock.frames--; if(knock.frames<=0) knock=null; }
+    else if(seek){ const x=parseFloat(round.baby.style.left), y=parseFloat(round.baby.style.top); const dx=seek.x-x, dy=seek.y-y, m=Math.hypot(dx,dy)||1; NX=dx/m; NY=dy/m; if(m<64){ onPick(seek.target); requestAnimationFrame(loop); return; } }
+    const field=$('#field'); const w=field.clientWidth, h=field.clientHeight, gh=groundHeight();
+    const SPEED=560/60; let x=parseFloat(round.baby.style.left)+(NX*SPEED), y=parseFloat(round.baby.style.top)+(NY*SPEED);
+    const half=BABY_HALF*scale, pad=10, bottom=h-gh-half-pad, left=half+pad, right=w-half-pad, top=half+pad;
+    if(y>=bottom && NY>0) NY=0; x=clamp(x,left,right); y=clamp(y,top,bottom);
+    round.baby.style.left=x+'px'; round.baby.style.top=y+'px';
+    if(qTag){ qTag.style.left=x+'px'; qTag.style.top=(y-70*scale)+'px'; }
+    for(const m of round.mamas){ const mx=parseFloat(m.el.style.left), my=parseFloat(m.el.style.top); if(Math.hypot(mx-x,my-y)<70){ onPick(m); break; } }
+    trySnakeHit(); if(snakeCooldown>0) snakeCooldown--;
+    requestAnimationFrame(loop);
+  }
+
+  /* ===================== NAV & SCREENS ===================== */
+  function showScreen(which){
+    $('#screenMap').classList.toggle('hide', which!=='map');
+    $('#screenPlay').classList.toggle('hide', which!=='play');
+    $('#screenDen').classList.toggle('hide', which!=='den');
+  }
+  $('#navMap').onclick = ()=>showScreen('map');
+  $('#navPlay').onclick = ()=>showScreen('play');
+  $('#navDen').onclick  = ()=>{ renderDen(); showScreen('den'); };
+
+  /* ===================== SAVE / LOAD ===================== */
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify({
+    currentPos, highestPos, sublevel, scale, snakeStartLen, collection:[...collection], decorLevel
+  })); }catch(e){} }
+  function load(){ try{
+    const d=JSON.parse(localStorage.getItem(KEY)||'{}');
+    currentPos=d.currentPos??0; highestPos=d.highestPos??0; sublevel=d.sublevel??1;
+    scale=clamp(d.scale??startScale, MIN_SCALE, MAX_SCALE);
+    snakeStartLen=Math.max(SNAKE_START_LEN, d.snakeStartLen??SNAKE_START_LEN);
+    collection=new Set(d.collection||[]); decorLevel=d.decorLevel??0;
+  }catch(e){} }
+
+  /* ===================== SMALL UTILS ===================== */
+  const toast = $('#toast'); function toastMsg(s,ms=1100){ toast.textContent=s; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), ms); }
+  $('#mute').onclick=()=>{ soundOn=!soundOn; $('#mute').textContent = soundOn? '🔊 Sound':'🔇 Muted'; };
+
+  // Start
+  function boot(){
+    renderMap(); load(); updateTableHud(); updateSizeBar(); renderDen(); showScreen('map');
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
