@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Find Mama Hen — SVG v9 (Progress Persists)</title>
+<title>Find Mama Hen — Tilt Edition (v2)</title>
 <style>
   :root{
     --sky1:#bfe6ff; --sky2:#8cc7ff; --field:#9adf76; --field2:#6bbb49;
-    --ink:#0b1a28; --muted:#4a5a6b; --good:#22c55e; --bad:#ef4444;
+    --ink:#0b1a28; --muted:#4a5a6b;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;color:var(--ink);
        background:linear-gradient(180deg,var(--sky1),var(--sky2) 65%,var(--field) 65%,var(--field2))}
-  .app{max-width:1100px;margin:0 auto;padding:12px 12px 48px}
+  .app{max-width:980px;margin:0 auto;padding:10px}
   header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
   h1{font-size:clamp(22px,3vw,32px);margin:6px 0}
   .hud{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -24,7 +24,7 @@
   .btn.ghost{background:transparent;border:1px solid #0003;color:#123}
   .card{background:rgba(255,255,255,.7);border:1px solid #0002;border-radius:16px;padding:12px 14px;margin-top:12px;backdrop-filter:blur(6px)}
 
-  #field{position:relative;height:50vh;min-height:420px;border-radius:16px;overflow:hidden;border:1px solid #0002;background:transparent}
+  #field{position:relative;height:60vh;min-height:460px;border-radius:18px;overflow:hidden;border:1px solid #0002;background:transparent}
   .fullscreen #field{position:fixed;inset:0;height:100vh;min-height:100vh;border-radius:0;z-index:20;
                      background:linear-gradient(180deg,var(--sky1),var(--sky2) 65%,var(--field) 65%,var(--field2))}
   .fullscreen .fsHide{display:none!important}
@@ -36,21 +36,18 @@
 
   .sprite{position:absolute;transform:translate(-50%,-50%) scale(var(--scale,1));user-select:none;touch-action:none}
   svg{display:block}
-  .qtag{position:absolute; transform:translate(-50%,0); font-weight:900; font-size:22px; color:#1b1b1b;
-        text-shadow:0 1px 0 #fff9; padding:2px 8px; border-radius:8px; background:#fffdf2; border:1px solid #0001}
+  .qtag{position:absolute; transform:translate(-50%,-50%); font-weight:900; font-size:22px; color:#1b1b1b;
+        text-shadow:0 1px 0 #fff9; padding:6px 12px; border-radius:12px; background:#fffdf2; border:1px solid #0001}
+
   .hen .label{position:absolute; left:50%; top:60%; transform:translate(-50%,-50%); font-weight:900; font-size:22px; color:#1b1b1b; text-shadow:0 1px 0 #fff9}
   .hug{animation:hug .6s ease forwards}
-  @keyframes hug{0%{transform:translate(-50%,-50%) scale(var(--scale,1))}50%{transform:translate(-50%,-50%) scale(calc(var(--scale,1) * 1.06))}100%{transform:translate(-50%,-50%) scale(var(--scale,1))}}
+  @keyframes hug{0%{transform:translate(-50%,-50%) scale(var(--scale,1))}30%{transform:translate(-50%,-50%) scale(calc(var(--scale,1)*1.06))}100%{transform:translate(-50%,-50%) scale(var(--scale,1))}}
   .shake{animation:shake .45s ease}
-  @keyframes shake{0%,100%{transform:translate(-50%,-50%) scale(var(--scale,1))}25%{transform:translate(calc(-50% - 8px),-50%) scale(var(--scale,1))}75%{transform:translate(calc(-50% + 8px),-50%) scale(var(--scale,1))}}
+  @keyframes shake{0%,100%{transform:translate(-50%,-50%) scale(var(--scale,1))}30%{transform:translate(calc(-50% - 8px),-50%) scale(var(--scale,1))}70%{transform:translate(calc(-50% + 8px),-50%) scale(var(--scale,1))}}
 
-  .controls{position:fixed;inset:0;z-index:35;pointer-events:none}
-  .pad{position:absolute;bottom:20px;width:35%;height:28%;pointer-events:auto}
-  .left{left:0}.right{right:0}
-  .pad button{width:100%;height:100%;opacity:0}
-  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:50;background:#0008;color:#fff;padding:8px 12px;border-radius:10px;border:1px solid #fff3;opacity:0;transition:opacity .25s, transform .25s;pointer-events:none}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:50;background:#111c;color:#fff;
+         border-radius:12px;padding:8px 12px;box-shadow:0 8px 26px #0005;opacity:0;transition:opacity .25s, transform .25s;pointer-events:none}
   .toast.show{opacity:1;transform:translate(-50%,-4px)}
-  .dead{filter:grayscale(.7) brightness(.85)}
   .meter{height:10px;border-radius:999px;background:#ffffffaa;border:1px solid #0002;overflow:hidden}
   .meter>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#22c55e,#3b82f6)}
 
@@ -58,177 +55,156 @@
   .ring svg{width:44px;height:44px}
   .ring .label{font-weight:800}
 
-  .celebrate, .dropfx{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:60}
-  .confetti{position:absolute;font-size:20px;will-change:transform,opacity}
-  .down{position:absolute;font-size:22px;will-change:transform,opacity}
+  /* Tilt gate */
+  #tiltGate{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60;background:rgba(0,0,0,.35)}
+  #tiltCard{background:#fff;border-radius:16px;border:1px solid #0002;padding:16px;max-width:420px;text-align:center;box-shadow:0 20px 40px #0003}
+  #tiltCard h3{margin:0 0 10px}
 </style>
 </head>
 <body>
 <div class="app">
   <button id="exitFS" title="Back to menu">✖</button>
   <header class="fsHide">
-    <h1>🐣 Find <b>Mama Hen</b> — Times Table Adventure (SVG v9)</h1>
+    <h1>🐣 Find Mama Hen — <span style="font-weight:900">Tilt Edition</span> <small style="font-size:12px;color:#4a5a6b">v2</small></h1>
     <div class="hud">
-      <div class="pill">🪙 <span id="coins">0</span></div>
-      <div class="pill">🔥 <span id="streak">0</span></div>
-      <div class="pill">📈 Table <b id="tblNow">2</b> <span style="margin-left:6px;color:#5b6b7a" id="tblHint"></span></div>
-      <div class="pill ring">
-        <svg viewBox="0 0 40 40">
-          <circle cx="20" cy="20" r="17" fill="none" stroke="#e5e7eb" stroke-width="4"/>
-          <circle id="ringProg" cx="20" cy="20" r="17" fill="none" stroke="#22c55e" stroke-width="4"
-                  stroke-linecap="round" stroke-dasharray="0 999" transform="rotate(-90 20 20)"/>
+      <div class="pill">💰 Coins: <span id="coins">0</span></div>
+      <div class="pill">🔥 Streak: <span id="streak">0</span></div>
+      <div class="pill ring" title="Hugs toward unlock">
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="17" stroke="#0002" stroke-width="4" fill="none"/>
+          <circle cx="20" cy="20" r="17" stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(-90 20 20)"
+                  stroke-dasharray="0 106" id="ringProg"/>
         </svg>
-        <span class="label"><span id="ringNum">0</span>/5</span>
+        <span class="label" id="ringNum">0</span>
       </div>
-      <div class="pill" style="min-width:180px">Size
-        <div class="meter" style="flex:1;margin-left:8px"><span id="sizeBar"></span></div>
-      </div>
-      <button id="mute" class="btn small">🔊 Sound</button>
-      <button id="reset" class="btn small">Reset</button>
-      <button id="clear" class="btn small ghost">Clear progress</button>
+      <div class="pill" style="min-width:140px;text-align:center">Table: <b id="tblNow">2</b>× <span id="tblHint" style="color:var(--muted)"></span></div>
+      <div class="pill meter" style="width:160px"><span id="sizeBar"></span></div>
+      <button class="btn small" id="mute">🔊 Sound</button>
+      <button class="btn small" id="reset">Reset</button>
+      <button class="btn small ghost" id="clear">Clear progress</button>
     </div>
   </header>
 
   <section class="card fsHide">
-    <div style="font-weight:800">How it works</div>
-    <div>Starts at <b>2×</b>. Every <b>5 consecutive hugs</b> unlocks the next table. If you return to your starting size after growing, you’ll <b>drop two tables</b> (never below 2×) and restart. <b>Progress is saved</b> between sessions.</div>
+    <div style="font-weight:800">What’s new in v2</div>
+    <ul style="margin:8px 0 0 22px">
+      <li>Bottom hen stays fully on-screen.</li>
+      <li>More responsive tilt & smoother movement.</li>
+      <li>No sticking on the lower edge.</li>
+      <li>Chick never grows larger than the hens.</li>
+      <li>Tap any hen to auto-move the chick to it.</li>
+    </ul>
     <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
       <button class="btn" id="play">Play ▶</button>
       <span id="unlockMsg" style="color:#4a5a6b"></span>
     </div>
   </section>
 
-  <section class="game">
-    <div id="field" aria-live="polite">
-      <div class="ground" aria-hidden="true"></div>
-    </div>
-    <div class="card fsHide">
-      <div style="font-weight:800">Goal</div>
-      <div>Grow with hugs (+15%), shrink with pecks (−15%). Death if below baseline; <b>level-drop restart</b> if back at baseline after growing.</div>
-    </div>
-  </section>
-</div>
-
-<div class="controls" id="controls" style="display:none">
-  <div class="pad left"><button aria-label="Move Left"></button></div>
-  <div class="pad right"><button aria-label="Move Right"></button></div>
+  <div id="field">
+    <div class="ground"></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="celebrate" id="celebrate"></div>
-<div class="dropfx" id="dropfx"></div>
+
+<!-- Tilt permission gate (iOS) -->
+<div id="tiltGate">
+  <div id="tiltCard">
+    <h3>Enable Tilt Controls</h3>
+    <p>On iPad/iPhone, Apple requires your permission to use motion sensors.</p>
+    <button class="btn" id="enableTilt">Enable Tilt</button>
+    <div style="margin-top:8px;color:#4a5a6b;font-size:13px">If you don’t allow, you can still use the arrow keys, drag, or tap hens.</div>
+  </div>
+</div>
 
 <script>
 (function(){
   const $ = s=>document.querySelector(s);
   const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
 
-  // Storage helpers
-  const KEY = 'henProgress:v1';
-  function loadProgress(){
+  // ---------- Game order & state ----------
+  const ORDER = [2,3,1,10,5,11,4,6,7,8,9,12];
+  const POS_OF_11 = ORDER.indexOf(11);
+
+  const KEY = 'henProgress:v2.1';
+  let currentPos = 0;
+  let highestPos = 0;
+  let consecCorrect = 0;
+  let sublevel = 1;
+  let soundOn = true;
+
+  // Chick size mechanic
+  const CHICK_HALF = 60; // visual half-height baseline
+  const HEN_HALF = 70;
+  const startScale = 1;
+  const MAX_SCALE = 1.18; // never exceed hen width (~160 vs chick 130)
+  const MIN_SCALE = 0.5;
+  let scale = startScale, hasBeenAboveBaseline = false;
+
+  // Motion state
+  let tiltX = 0, tiltY = 0;     // -1..1 range
+  let keyX = 0, keyY = 0;       // keyboard fallback
+  let dragging = false, dragX=0, dragY=0;
+  let seek = null;              // {x,y,target}
+
+  // Round state
+  let round = { q:null, chick:null, hens:[], picking:false };
+
+  // UI refs
+  const field = $('#field');
+  const toast = $('#toast'), sizeBar = $('#sizeBar');
+  const tblNow = $('#tblNow'), tblHint = $('#tblHint'), unlockMsg = $('#unlockMsg');
+  const ringNum = $('#ringNum'), ringProg = $('#ringProg');
+  const tiltGate = $('#tiltGate'), enableTiltBtn = $('#enableTilt');
+
+  // ---------- Helpers ----------
+  function groundHeight(){
+    const g = field.querySelector('.ground');
+    const hpx = parseFloat(getComputedStyle(g).height) || (field.clientHeight*0.14);
+    return Math.max(100, hpx);
+  }
+
+  // ---------- Storage ----------
+  function save(){ try{
+    localStorage.setItem(KEY, JSON.stringify({
+      currentPos, highestPos, consecCorrect, sublevel, scale
+    }));
+  }catch(e){} }
+  function load(){
     try{
       const raw = localStorage.getItem(KEY);
-      if(!raw) return null;
-      return JSON.parse(raw);
-    }catch(e){ return null; }
-  }
-  function saveProgress(data){
-    try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){}
-  }
-  function clearProgress(){
-    try{ localStorage.removeItem(KEY); }catch(e){}
+      if(raw){
+        const d = JSON.parse(raw);
+        currentPos = Math.max(0, Math.min(ORDER.length-1, d.currentPos ?? currentPos));
+        highestPos = Math.max(0, Math.min(ORDER.length-1, d.highestPos ?? highestPos));
+        consecCorrect = d.consecCorrect ?? 0;
+        sublevel = d.sublevel ?? 1;
+        scale = Math.min(MAX_SCALE, d.scale ?? startScale);
+      }
+    }catch(e){}
   }
 
-  // Audio
+  function toastMsg(s,ms=1200){ toast.textContent=s; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), ms); }
+
+  // ---------- Audio ----------
   const audioCtx = typeof AudioContext!=='undefined' ? new AudioContext() : null;
-  let soundOn = true;
   function beep(freq=700, dur=.07, type='triangle', vol=.11){
     if(!audioCtx || !soundOn) return;
     const o=audioCtx.createOscillator(), g=audioCtx.createGain();
     o.type=type; o.frequency.value=freq; g.gain.value=vol;
-    o.connect(g).connect(audioCtx.destination); o.start(); setTimeout(()=>o.stop(), dur*1000);
+    o.connect(g).connect(audioCtx.destination); o.start();
+    setTimeout(()=>{ g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur); }, 0);
+    o.stop(audioCtx.currentTime+dur+.01);
   }
-  function chirp(){beep(980,.06,'triangle',.13); setTimeout(()=>beep(1200,.06,'triangle',.13),70)}
-  function squawk(){beep(260,.12,'square',.15); setTimeout(()=>beep(180,.14,'square',.13),70)}
+  function chirp(){ beep(820,.07,'triangle',.12); setTimeout(()=>beep(980,.07,'triangle',.10), 60); }
+  function squawk(){ beep(320,.09,'sawtooth',.15); }
 
-  // State
-  let round=null, running=false, rafId=null, holdLeft=false, holdRight=false, autoTimer=null, autoDelay=5000;
-  let qTag=null;
-  let startScale=0.55, scale=startScale, MAX_SCALE=1.7, MIN_SCALE=0.35;
-  let currentMax = 2;
-  let highestUnlocked = 2;
-  let consecCorrect = 0;
-  let biasWeight = 0.55;
-  let hasBeenAboveBaseline = false;
-
-  // UI refs
-  const field = $('#field'), controls = $('#controls');
-  const coinsEl = $('#coins'), streakEl = $('#streak'), toast = $('#toast'), sizeBar = $('#sizeBar');
-  const tblNow = $('#tblNow'), tblHint = $('#tblHint'), unlockMsg = $('#unlockMsg');
-  const ringNum = $('#ringNum'), ringProg = $('#ringProg');
-  const celebrate = $('#celebrate'), dropfx = $('#dropfx');
-
-  function toastMsg(s,ms=1200){ toast.textContent=s; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), ms); }
-
-  // Confetti
-  function confettiBurst(){
-    for(let i=0;i<36;i++){
-      const d=document.createElement('div');
-      d.className='confetti';
-      d.textContent = ['🎉','✨','💫','⭐','🎊'][rnd(0,4)];
-      const x = Math.random()*window.innerWidth;
-      d.style.left = x+'px'; d.style.top = '-20px'; d.style.opacity='1';
-      celebrate.appendChild(d);
-      const fall = 1200 + Math.random()*900;
-      const drift = (Math.random()*120-60);
-      const start = performance.now();
-      function step(t){
-        const p = Math.min(1,(t-start)/fall);
-        d.style.transform = `translate(${drift*p}px, ${(window.innerHeight+60)*p}px) rotate(${p*720}deg)`;
-        d.style.opacity = (1-p).toFixed(2);
-        if(p<1) requestAnimationFrame(step); else d.remove();
-      }
-      requestAnimationFrame(step);
-    }
-  }
-
-  // Level drop effect
-  function levelDropEffect(from, to){
-    for(let i=0;i<28;i++){
-      const d=document.createElement('div');
-      d.className='down';
-      d.textContent = ['⬇️','🔻','🪶'][rnd(0,2)];
-      const x = Math.random()*window.innerWidth;
-      d.style.left = x+'px'; d.style.top = '-10px'; d.style.opacity='1';
-      dropfx.appendChild(d);
-      const fall = 900 + Math.random()*800;
-      const drift = (Math.random()*80-40);
-      const start = performance.now();
-      function step(t){
-        const p = Math.min(1,(t-start)/fall);
-        d.style.transform = `translate(${drift*p}px, ${(window.innerHeight+40)*p}px) rotate(${p*360}deg)`;
-        d.style.opacity = (1-p).toFixed(2);
-        if(p<1) requestAnimationFrame(step); else d.remove();
-      }
-      requestAnimationFrame(step);
-    }
-    toastMsg(`Level drop: ${from}× → ${to}×`, 1600);
-  }
-
-  // Ring
-  function updateRing(){
-    ringNum.textContent = consecCorrect;
-    const max = 5, C = 2 * Math.PI * 17;
-    const ratio = Math.max(0, Math.min(1, consecCorrect / max));
-    const dash = (C * ratio).toFixed(1);
-    ringProg.setAttribute('stroke-dasharray', `${dash} ${Math.max(0,C-dash).toFixed(1)}`);
-  }
-
-  // Sprites
+  // ---------- Sprites ----------
   function svgChick(){
-    const el=document.createElement('div'); el.className='sprite chick';
+    const el=document.createElement('div'); el.className='sprite chick'; el.style.setProperty('--scale', scale);
     el.innerHTML=`<svg width="130" height="120" viewBox="0 0 130 120" aria-hidden="true">
-      <defs><radialGradient id="gY" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#fff7c9"/><stop offset="100%" stop-color="#ffd84d"/></radialGradient></defs>
+      <defs><radialGradient id="gY" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#fff2a8"/><stop offset="100%" stop-color="#ffd84d"/></radialGradient></defs>
       <path d="M40 18 C50 8,65 8,72 18 C62 16,50 18,40 18" fill="#ff6b6b"/>
       <ellipse cx="60" cy="60" rx="45" ry="38" fill="url(#gY)" stroke="#00000024"/>
       <ellipse cx="48" cy="62" rx="16" ry="12" fill="#ffe88a" stroke="#00000014"/>
@@ -242,51 +218,55 @@
   function svgHen(){
     const el=document.createElement('div'); el.className='sprite hen';
     el.innerHTML=`<svg width="160" height="140" viewBox="0 0 160 140" aria-hidden="true">
-      <defs><radialGradient id="gH" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#ffe0e0"/><stop offset="100%" stop-color="#ffb5b5"/></radialGradient></defs>
-      <path d="M60 24 C68 10,88 10,96 24 C90 22,73 26,60 24" fill="#ff4d4d"/>
-      <ellipse cx="100" cy="74" rx="6" ry="10" fill="#ff6b6b"/>
-      <ellipse cx="80" cy="70" rx="54" ry="44" fill="url(#gH)" stroke="#00000028"/>
-      <ellipse cx="60" cy="76" rx="22" ry="16" fill="#ffc9c9" stroke="#00000014"/>
-      <circle cx="92" cy="56" r="5" fill="#1b1b1b"/>
-      <polygon points="110,70 132,76 110,82" fill="#cc6e1a"/>
-      <line x1="70" y1="110" x2="70" y2="126" stroke="#b96a00" stroke-width="5" stroke-linecap="round"/>
-      <line x1="92" y1="110" x2="92" y2="126" stroke="#b96a00" stroke-width="5" stroke-linecap="round"/>
+      <defs><radialGradient id="gH" cx="45%" cy="35%" r="70%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#e3e3e3"/></radialGradient></defs>
+      <path d="M30 24 C44 6,72 6,86 24 C72 20,52 22,30 24" fill="#ff6b6b"/>
+      <ellipse cx="70" cy="70" rx="54" ry="42" fill="url(#gH)" stroke="#00000024"/>
+      <circle cx="88" cy="56" r="6" fill="#1b1b1b"/>
+      <polygon points="100,66 122,72 100,78" fill="#e67e22"/>
+      <line x1="60" y1="108" x2="60" y2="124" stroke="#a06c00" stroke-width="5" stroke-linecap="round"/>
+      <line x1="78" y1="108" x2="78" y2="124" stroke="#a06c00" stroke-width="5" stroke-linecap="round"/>
     </svg>
-    <div class="label"></div>`;
+    <div class="label">?</div>`;
     return el;
   }
 
-  // Size
+  // ---------- HUD updates ----------
   function updateSizeBar(){
-    const pct = Math.max(0, Math.min(100, ((scale - startScale) / (MAX_SCALE - startScale)) * 100));
-    sizeBar.style.width = pct + '%';
+    const ratio = (scale - MIN_SCALE) / (MAX_SCALE - MIN_SCALE);
+    sizeBar.style.width = Math.max(0, Math.min(1, ratio))*100 + '%';
   }
-  function applyScale(){
-    if(!round?.chick) return;
-    scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
-    if(scale > startScale + 1e-6) hasBeenAboveBaseline = true;
-    round.chick.style.setProperty('--scale', scale);
-    if(qTag){
-      const x = parseFloat(round.chick.style.left);
-      const y = parseFloat(round.chick.style.top);
-      qTag.style.left = x+'px'; qTag.style.top = (y + 54*scale)+'px';
-    }
-    updateSizeBar();
+  function updateRing(){
+    ringNum.textContent = consecCorrect;
+    const max = 5, C = 2 * Math.PI * 17;
+    const ratio = Math.max(0, Math.min(1, consecCorrect / max));
+    const dash = (C * ratio).toFixed(1);
+    ringProg.setAttribute('stroke-dasharray', `${dash} ${Math.max(0,C-dash).toFixed(1)}`);
+  }
+  function updateTableHud(){
+    const nowTbl = ORDER[currentPos];
+    const nextTbl = ORDER[currentPos+1] ?? ORDER[currentPos];
+    tblNow.textContent = nowTbl;
+    tblHint.textContent = currentPos < ORDER.length-1 ? `(next: ${nextTbl}× after 5 hugs)` : '(all tables done)';
   }
 
-  // Question selection
-  function pickTable(){
-    if(Math.random() < biasWeight) return currentMax;
-    if(currentMax===2) return 2;
-    const pool=[]; for(let t=2;t<=currentMax;t++) pool.push(t);
-    return pool[rnd(0,pool.length-1)];
+  // ---------- Questions & options ----------
+  function isAfter11(){ return currentPos > POS_OF_11; }
+  function currentNumOptions(){
+    return isAfter11() ? Math.max(1, Math.min(4, sublevel)) : 4;
+  }
+  function pickTableForQuestion(){
+    const biasWeight = 0.6;
+    if(Math.random() < biasWeight) return ORDER[currentPos];
+    const unlocked = ORDER.slice(0, highestPos+1);
+    return unlocked[rnd(0, unlocked.length-1)];
   }
   function genQ(){
-    const a = pickTable();
+    const a = pickTableForQuestion();
     const b = rnd(1,12);
-    const ans = a*b;
+    const ans = a * b;
+    const need = currentNumOptions() - 1;
     const wrongs = new Set();
-    while(wrongs.size<3){
+    while(wrongs.size < need){
       const delta = rnd(-10,10);
       const g = Math.max(1, Math.min(144, ans+delta));
       if(g!==ans) wrongs.add(g);
@@ -296,241 +276,273 @@
     return {a,b,ans,options:opts};
   }
 
-  // Q tag
+  // ---------- Placement (four sides) ----------
+  function sidesFor(n){
+    const all = ['top','right','bottom','left'];
+    if(n>=4) return all;
+    const chosen = new Set();
+    while(chosen.size < n){ chosen.add(all[rnd(0,all.length-1)]); }
+    return Array.from(chosen);
+  }
+  function posForSide(side,w,h){
+    // Keep hens fully visible and bottom hen above ground
+    const edge = 14;
+    const gh = groundHeight();
+    if(side==='top')    return {x:w/2, y: edge + HEN_HALF};
+    if(side==='bottom') return {x:w/2, y: h - gh - HEN_HALF - edge};
+    if(side==='left')   return {x: edge + HEN_HALF,  y:h/2};
+    if(side==='right')  return {x: w - HEN_HALF - edge, y:h/2};
+    return {x:w/2,y:h/2};
+  }
+
+  // ---------- Round control ----------
+  function clearSprites(){ field.querySelectorAll('.sprite,.fx,.qtag').forEach(n=>n.remove()); }
+  let qTag=null;
   function placeQTag(x,y,text){
     if(!qTag){ qTag=document.createElement('div'); qTag.className='qtag'; field.appendChild(qTag); }
     qTag.textContent = text;
-    qTag.style.left = x+'px';
-    qTag.style.top  = (y + 54*scale) + 'px';
+    qTag.style.left = x+'px'; qTag.style.top = y+'px';
   }
 
-  function hydrateFromStorage(){
-    const s = loadProgress();
-    if(!s) return;
-    highestUnlocked = Math.min(12, Math.max(2, s.highestUnlocked||2));
-    currentMax = Math.min(highestUnlocked, Math.max(2, s.currentMax||highestUnlocked));
-    tblNow.textContent = currentMax;
-    tblHint.textContent = currentMax<12 ? `(unlock ${currentMax+1}× after 5 hugs)` : '(all tables unlocked)';
-    unlockMsg.textContent = `Progress loaded (up to ${highestUnlocked}×)`;
-    setTimeout(()=> unlockMsg.textContent = '', 1600);
-  }
-  function persist(){ saveProgress({ highestUnlocked, currentMax }); }
-
-  function hardResetToTwo(){
-    scale = startScale; hasBeenAboveBaseline = false;
-    consecCorrect = 0; currentMax = 2; highestUnlocked = Math.max(highestUnlocked, 2); biasWeight = 0.55;
-    round = {coins:0, streak:0, q:null, chick:null, hens:[], landing:false};
-    coinsEl.textContent='0'; streakEl.textContent='0';
-    updateSizeBar(); updateRing();
-    autoDelay = 5000;
-    tblNow.textContent = currentMax;
-    tblHint.textContent = '(unlock 3× after 5 hugs)';
-    unlockMsg.textContent = '';
-    persist();
-  }
-
-  function softRestartWithDrop(){
-    const from = highestUnlocked;
-    const to = Math.max(2, highestUnlocked - 2);
-    currentMax = to;
-    scale = startScale; hasBeenAboveBaseline = false;
-    consecCorrect = 0; biasWeight = 0.6;
-    round = {coins:0, streak:0, q:null, chick:null, hens:[], landing:false};
-    coinsEl.textContent='0'; streakEl.textContent='0';
-    updateSizeBar(); updateRing();
-    autoDelay = 5000;
-    tblNow.textContent = currentMax;
-    tblHint.textContent = currentMax<12 ? `(unlock ${currentMax+1}× after 5 hugs)` : '(all tables unlocked)';
-    unlockMsg.textContent = `Restarted at ${currentMax}× (−2 levels)`;
-    levelDropEffect(from, to);
-    persist();
-  }
-
-  function start(first=false){
-    document.body.classList.add('fullscreen');
-    controls.style.display='block';
-    field.querySelectorAll('.sprite,.fx').forEach(n=>n.remove());
-    if(qTag){ qTag.remove(); qTag=null; }
-    if(first){ hydrateFromStorage(); } else { softRestartWithDrop(); }
-    nextQuestion();
-    running = true;
-    loop();
-  }
-
-  function endRound(msg){
-    running=false; cancelAnimationFrame(rafId); clearTimeout(autoTimer);
-    toastMsg(msg, 1500);
-  }
-
-  function nextQuestion(){
-    clearTimeout(autoTimer);
-    field.querySelectorAll('.sprite,.fx').forEach(n=>n.remove());
-    if(qTag){ qTag.remove(); qTag=null; }
+  function nextRound(){
+    clearSprites(); if(qTag){ qTag.remove(); qTag=null; }
     round.q = genQ();
     const w = field.clientWidth, h = field.clientHeight;
-    const yH = h*0.82;
-    const xs = [0.12,0.36,0.64,0.88].map(p=>Math.round(w*p));
-    round.hens = round.q.options.map((val,i)=>{
+    // Create hens around edges
+    const n = currentNumOptions();
+    const sides = sidesFor(n);
+    const choices = round.q.options.slice(0,n); // already shuffled
+    round.hens = [];
+    for(let i=0;i<n;i++){
+      const side = sides[i];
       const el = svgHen(); field.appendChild(el);
-      el.style.left = xs[i]+'px'; el.style.top = yH+'px';
-      el.querySelector('.label').textContent = val;
-      return {el, val, correct: val===round.q.ans};
-    });
+      const p = posForSide(side,w,h);
+      el.style.left = p.x+'px'; el.style.top = p.y+'px';
+      el.querySelector('.label').textContent = choices[i];
+      const hObj = {el, val:choices[i], correct: choices[i]===round.q.ans, side};
+      round.hens.push(hObj);
+
+      // Tap/Click to auto-move toward this hen
+      el.addEventListener('pointerdown', (ev)=>{
+        ev.preventDefault();
+        if(round.picking) return;
+        seek = {x:p.x, y:p.y, target:hObj};
+        // slight visual feedback
+        el.style.filter = 'brightness(1.05) drop-shadow(0 3px 6px rgba(0,0,0,.15))';
+        setTimeout(()=>{ el.style.filter=''; }, 180);
+      });
+    }
+    // Chick
     round.chick = svgChick(); field.appendChild(round.chick);
-    const cx = w/2, cy = h*0.18;
+    const cx = w/2, cy = Math.min(h/2, h - groundHeight() - (CHICK_HALF*scale) - 40);
     round.chick.style.left = cx+'px'; round.chick.style.top = cy+'px';
-    applyScale();
-    placeQTag(cx, cy, `${round.q.a} × ${round.q.b}`);
-    round.landing=false;
-    autoTimer = setTimeout(()=>{ if(!round.landing) doDrop(true); }, autoDelay);
-    autoDelay = Math.max(2500, autoDelay - 150);
+    placeQTag(cx, cy - 70*scale, `${round.q.a} × ${round.q.b}`);
+    round.picking = false;
   }
 
-  // Movement
-  function loop(){
-    rafId = requestAnimationFrame(loop);
-    if(!running) return;
-    const c=round?.chick; if(!c) return;
-    const w = field.clientWidth; const dt = 1/60;
-    let x = parseFloat(c.style.left);
-    if(holdLeft) x -= 440*dt;
-    if(holdRight) x += 440*dt;
-    x = Math.max(70, Math.min(w-70, x));
-    c.style.left = x+'px';
-    if(qTag){
-      const y = parseFloat(c.style.top);
-      qTag.style.left = x+'px'; qTag.style.top  = (y + 54*scale)+'px';
-    }
-  }
-
-  // Input
-  function bindHold(btn, setter){
-    const on = ()=>{ setter(true); if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); };
-    const off = ()=>{ setter(false); };
-    btn.addEventListener('touchstart', on, {passive:true});
-    btn.addEventListener('touchend', off); btn.addEventListener('touchcancel', off);
-    btn.addEventListener('mousedown', on); btn.addEventListener('mouseup', off); btn.addEventListener('mouseleave', off);
-  }
-  bindHold(document.querySelector('.pad.left button'), v=>holdLeft=v);
-  bindHold(document.querySelector('.pad.right button'), v=>holdRight=v);
-  document.addEventListener('keydown', e=>{ if(e.key==='ArrowLeft') holdLeft=true; if(e.key==='ArrowRight') holdRight=true; });
-  document.addEventListener('keyup', e=>{ if(e.key==='ArrowLeft') holdLeft=false; if(e.key==='ArrowRight') holdRight=false; });
-
-  // Drop
-  function doDrop(){
-    if(round.landing) return;
-    round.landing=true; clearTimeout(autoTimer);
-    const c = round.chick; const h = field.clientHeight; const endY = h*0.8; const startY = parseFloat(c.style.top);
-    const start = performance.now(); const D = 1900;
-    function step(t){
-      const p = Math.min(1,(t-start)/D);
-      const e = p*p;
-      const y = startY + (endY-startY)*e;
-      c.style.top = y+'px';
-      if(p<1) requestAnimationFrame(step); else resolveLanding();
-    }
-    requestAnimationFrame(step);
-  }
-
-  function nearestHen(){
-    const cx = parseFloat(round.chick.style.left);
-    let best=null,bd=1e9;
-    for(const h of round.hens){
-      const x = parseFloat(h.el.style.left); const d = Math.abs(cx-x);
-      if(d<bd){bd=d; best=h;}
-    }
-    return best;
-  }
-
-  function fxHearts(x,y){
-    for(let i=0;i<6;i++){
-      const s=document.createElement('div'); s.className='fx'; s.textContent='💖'; s.style.position='absolute';
-      s.style.left=x+'px'; s.style.top=y+'px'; s.style.transform='translate(-50%,-50%)'; s.style.fontSize=(18+rnd(0,6))+'px';
-      field.appendChild(s);
-      const dy = -(30+rnd(0,30)), dx = rnd(-20,20); let a=1,t=0;
-      const id=setInterval(()=>{ t+=1; a-=.02; s.style.opacity=a.toFixed(2); s.style.left=(x+dx*(t/40))+'px'; s.style.top=(y+dy*(t/40))+'px';
-        if(a<=0){ clearInterval(id); s.remove(); }},16);
-    }
-  }
-
-  function unlockIfReady(){
-    if(consecCorrect>=5 && currentMax<12){
-      consecCorrect = 0;
-      currentMax++; highestUnlocked = Math.max(highestUnlocked, currentMax);
-      tblNow.textContent = currentMax;
-      biasWeight = 0.6;
-      unlockMsg.textContent = `Unlocked ${currentMax}×! Practising it now.`;
-      tblHint.textContent = currentMax<12 ? `(unlock ${currentMax+1}× after 5 hugs)` : '(all tables unlocked)';
-      confettiBurst();
-      toastMsg(`Unlocked ${currentMax}×!`, 1200);
-      setTimeout(()=>{ unlockMsg.textContent=''; }, 2500);
-      persist();
-    }
-    updateRing();
-  }
-
-  function resolveLanding(){
-    const mom = nearestHen();
-    round.chick.style.left = mom.el.style.left;
-    if(qTag){ qTag.style.left = mom.el.style.left; }
-    if(mom.correct){
-      chirp(); round.chick.classList.add('hug'); mom.el.classList.add('hug');
-      fxHearts(parseFloat(mom.el.style.left), parseFloat(mom.el.style.top)-48);
-      round.coins=(round.coins||0)+3; coinsEl.textContent=round.coins;
-      round.streak=(round.streak||0)+1; streakEl.textContent=round.streak;
+  // ---------- Handling picks ----------
+  function onPick(target){
+    if(round.picking) return;
+    round.picking = true;
+    const x=parseFloat(target.el.style.left), y=parseFloat(target.el.style.top);
+    round.chick.style.left = x+'px'; round.chick.style.top = y+'px';
+    placeQTag(x, y - 70*scale, `${round.q.a} × ${round.q.b}`);
+    if(target.correct){
+      chirp(); round.chick.classList.add('hug'); target.el.classList.add('hug');
       consecCorrect++; updateRing();
-      scale = Math.min(MAX_SCALE, scale * 1.15);
-      applyScale();
-      unlockIfReady();
-      setTimeout(nextQuestion, 900);
-    }else{
-      squawk(); mom.el.classList.add('shake'); round.streak=0; streakEl.textContent=0;
-      consecCorrect = 0; updateRing();
-      scale = Math.max(MIN_SCALE, scale * 0.85);
-      applyScale();
-      const x=parseFloat(mom.el.style.left), y=parseFloat(mom.el.style.top)-50;
-      const p=document.createElement('div'); p.textContent='Peck!'; p.style.position='absolute'; p.style.left=x+'px'; p.style.top=y+'px';
-      p.style.transform='translate(-50%,-50%)'; p.style.fontWeight='900'; p.style.color='#c00'; field.appendChild(p);
-      setTimeout(()=> p.remove(), 650);
-      if(hasBeenAboveBaseline && Math.abs(scale - startScale) <= 0.01){
-        softRestartWithDrop();
-        nextQuestion();
-        return;
-      }
-      if(scale < startScale - 1e-6){
-        const startT = performance.now();
-        const init = scale;
-        function fade(t){
-          const pr = Math.min(1,(t-startT)/700);
-          const s = Math.max(0.35, init*(1-0.35*pr));
-          round.chick.style.setProperty('--scale', s);
-          round.chick.style.opacity = (1-0.6*pr).toFixed(2);
-          if(pr<1) requestAnimationFrame(fade); else endRound('Too tiny — game over.');
+      scale = Math.min(MAX_SCALE, scale * 1.10); // gentler growth and capped
+      hasBeenAboveBaseline = hasBeenAboveBaseline || scale > startScale + 1e-6;
+      round.chick.style.setProperty('--scale', scale);
+      updateSizeBar();
+      if(consecCorrect>=5){
+        consecCorrect = 0; updateRing();
+        if(currentPos > POS_OF_11 && sublevel < 4){
+          sublevel++;
+          toastMsg(`Sublevel ${sublevel} unlocked (${sublevel} hen${sublevel>1?'s':''})`, 1500);
+        }else{
+          if(currentPos < ORDER.length-1){
+            currentPos++;
+            highestPos = Math.max(highestPos, currentPos);
+            sublevel = (currentPos > POS_OF_11) ? 1 : 1;
+            const unlocked = ORDER[currentPos];
+            unlockMsg.textContent = `Unlocked ${unlocked}×! Practising it now.`;
+            setTimeout(()=> unlockMsg.textContent = '', 2500);
+            toastMsg(`Unlocked ${unlocked}×!`, 1200);
+          }
         }
-        requestAnimationFrame(fade);
-      }else{
-        setTimeout(()=> nextQuestion(), 800);
+        updateTableHud(); save();
       }
+      setTimeout(()=>{ seek=null; nextRound(); }, 650);
+    }else{
+      squawk(); target.el.classList.add('shake');
+      consecCorrect = 0; updateRing();
+      scale = Math.max(MIN_SCALE, scale * 0.88);
+      round.chick.style.setProperty('--scale', scale);
+      updateSizeBar();
+      if(hasBeenAboveBaseline && Math.abs(scale - startScale) <= 0.01){
+        const before = ORDER[currentPos];
+        currentPos = Math.max(0, currentPos - 2);
+        highestPos = Math.max(highestPos, currentPos);
+        sublevel = 1; consecCorrect = 0; updateRing();
+        scale = startScale; hasBeenAboveBaseline = false; updateSizeBar();
+        updateTableHud(); save();
+        toastMsg(`Level drop: ${before}× → ${ORDER[currentPos]}×`, 1600);
+      }
+      setTimeout(()=>{ seek=null; nextRound(); }, 600);
     }
+  }
+
+  // ---------- Movement (tilt + fallbacks + seek) ----------
+  function loop(){
+    const w = field.clientWidth, h = field.clientHeight;
+    const c = round?.chick; if(!c) { requestAnimationFrame(loop); return; }
+
+    // Blend inputs (more responsive)
+    let NX = Math.max(-1, Math.min(1, tiltX + keyX + dragX));
+    let NY = Math.max(-1, Math.min(1, tiltY + keyY + dragY));
+
+    // Auto-seek overrides direction
+    if(seek){
+      const x = parseFloat(c.style.left), y = parseFloat(c.style.top);
+      const dx = seek.x - x, dy = seek.y - y;
+      const mag = Math.hypot(dx,dy) || 1;
+      NX = Math.max(-1, Math.min(1, dx / mag));
+      NY = Math.max(-1, Math.min(1, dy / mag));
+      if(mag < 64){ onPick(seek.target); requestAnimationFrame(loop); return; }
+    }
+
+    // Movement
+    const SPEED = 560/60; // slightly faster
+    let x = parseFloat(c.style.left) + NX * SPEED;
+    let y = parseFloat(c.style.top)  + NY * SPEED;
+
+    // Dynamic bounds with sprite size and ground
+    const half = CHICK_HALF * scale;
+    const pad = 10;
+    const bottomLimit = h - groundHeight() - half - pad;
+    const leftLimit = half + pad;
+    const rightLimit = w - half - pad;
+    const topLimit = half + pad;
+
+    // Prevent pushing into the bottom edge
+    if(y >= bottomLimit && NY > 0) NY = 0;
+
+    x = clamp(x, leftLimit, rightLimit);
+    y = clamp(y, topLimit, bottomLimit);
+
+    c.style.left = x+'px'; c.style.top = y+'px';
+    const q = document.querySelector('.qtag'); if(q){ q.style.left = x+'px'; q.style.top = (y - 70*scale)+'px'; }
+
+    // Collision with any hen (manual steering)
+    for(const hObj of round.hens){
+      const hx = parseFloat(hObj.el.style.left), hy = parseFloat(hObj.el.style.top);
+      if(Math.hypot(hx - x, hy - y) < 64){ onPick(hObj); break; }
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  // Device orientation (more sensitive)
+  function initTilt(){
+    function handleOrientation(e){
+      const g = e.gamma || 0; // -90..90 (left/right)
+      const b = e.beta  || 0; // -180..180 (front/back)
+      const dead = 2;
+      const nx = Math.abs(g) < dead ? 0 : Math.max(-1, Math.min(1, g / 20));
+      const ny = Math.abs(b) < dead ? 0 : Math.max(-1, Math.min(1, (b - 0) / 25));
+      // faster response
+      tiltX = tiltX*0.7 + nx*0.3;
+      tiltY = tiltY*0.7 + ny*0.3;
+    }
+    if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
+      tiltGate.style.display = 'flex';
+      enableTiltBtn.onclick = async ()=>{
+        try{
+          const res = await DeviceOrientationEvent.requestPermission();
+          if(res==='granted'){
+            window.addEventListener('deviceorientation', handleOrientation);
+          }
+        }finally{
+          tiltGate.style.display='none';
+        }
+      };
+    }else if(typeof DeviceOrientationEvent !== 'undefined'){
+      window.addEventListener('deviceorientation', handleOrientation);
+    }
+  }
+
+  // Keyboard fallback
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowLeft')  keyX=-1;
+    if(e.key==='ArrowRight') keyX= 1;
+    if(e.key==='ArrowUp')    keyY=-1;
+    if(e.key==='ArrowDown')  keyY= 1;
+  });
+  document.addEventListener('keyup', e=>{
+    if(['ArrowLeft','ArrowRight'].includes(e.key)) keyX=0;
+    if(['ArrowUp','ArrowDown'].includes(e.key)) keyY=0;
+  });
+
+  // Drag fallback (touch/desktop)
+  field.addEventListener('touchstart', e=>{ dragging=true; }, {passive:true});
+  field.addEventListener('touchend', ()=>{ dragging=false; dragX=0; dragY=0; }, {passive:true});
+  field.addEventListener('touchmove', e=>{
+    if(!dragging) return;
+    const t = e.touches[0];
+    const rect = field.getBoundingClientRect();
+    const cx = parseFloat(round.chick.style.left);
+    const cy = parseFloat(round.chick.style.top);
+    const targetX = t.clientX - rect.left;
+    const targetY = t.clientY - rect.top;
+    const dx = targetX - cx, dy = targetY - cy;
+    const mag = Math.hypot(dx,dy) || 1;
+    dragX = (dx / mag);
+    dragY = (dy / mag);
+  }, {passive:true});
+  field.addEventListener('mousemove', e=>{
+    if(!e.buttons) { dragX=0; dragY=0; return; }
+    const rect = field.getBoundingClientRect();
+    const cx = parseFloat(round.chick.style.left);
+    const cy = parseFloat(round.chick.style.top);
+    const targetX = e.clientX - rect.left;
+    const targetY = e.clientY - rect.top;
+    const dx = targetX - cx, dy = targetY - cy;
+    const mag = Math.hypot(dx,dy) || 1;
+    dragX = (dx / mag);
+    dragY = (dy / mag);
+  });
+
+  // ---------- Game flow ----------
+  function hardReset(){
+    currentPos = 0; highestPos = 0; consecCorrect = 0; sublevel = 1;
+    scale = startScale; hasBeenAboveBaseline = false;
+    updateRing(); updateSizeBar(); updateTableHud(); save();
+    nextRound();
   }
 
   // Buttons
-  $('#play').onclick=()=>{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); start(true); };
-  $('#reset').onclick=()=>{ hardResetToTwo(); nextQuestion(); };
+  $('#play').onclick=()=>{
+    document.body.classList.add('fullscreen');
+    load(); updateTableHud(); updateRing(); updateSizeBar();
+    initTilt();
+    nextRound();
+    loop();
+  };
+  $('#reset').onclick=()=>{ hardReset(); toastMsg('Reset'); };
   $('#clear').onclick=()=>{
-    clearProgress();
-    highestUnlocked = 2; currentMax = 2;
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    hardReset();
     toastMsg('Progress cleared', 1000);
   };
   $('#mute').onclick=()=>{ soundOn=!soundOn; $('#mute').textContent = soundOn? '🔊 Sound':'🔇 Muted'; };
   $('#exitFS').onclick=()=>{
-    running=false; cancelAnimationFrame(rafId); clearTimeout(autoTimer);
-    document.body.classList.remove('fullscreen'); controls.style.display='none';
-    field.querySelectorAll('.sprite,.fx').forEach(n=>n.remove());
-    if(qTag){ qTag.remove(); qTag=null; }
+    document.body.classList.remove('fullscreen');
+    clearSprites(); if(qTag){ qTag.remove(); qTag=null; }
   };
 
-  document.body.addEventListener('touchstart', ()=>{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }, {passive:true});
-})();</script>
+  // Boot
+  updateTableHud(); updateRing(); updateSizeBar();
+})();
+</script>
 </body>
 </html>
