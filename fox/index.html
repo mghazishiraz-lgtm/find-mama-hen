@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Find Mama Fox — Tilt Edition (Snakes Split!)</title>
+<title>Find Mama Fox — Arrow Edition (Snakes Split!)</title>
 <style>
   :root{ --sky1:#bfe6ff; --sky2:#8cc7ff; --field:#9adf76; --field2:#6bbb49;
          --ink:#0b1a28; --muted:#4a5a6b; }
@@ -22,7 +22,7 @@
   .btn.ghost{background:transparent;border:1px solid #0003;color:#123}
   .card{background:rgba(255,255,255,.7);border:1px solid #0002;border-radius:16px;padding:12px 14px;margin-top:12px;backdrop-filter:blur(6px)}
 
-  #field{position:relative;height:60vh;min-height:480px;border-radius:18px;overflow:hidden;border:1px solid #0002;background:transparent}
+  #field{position:relative;height:60vh;min-height:480px;border-radius:18px;overflow:hidden;border:1px solid #0002;background:transparent;touch-action:none}
   .fullscreen #field{position:fixed;inset:0;height:100vh;min-height:100vh;border-radius:0;z-index:20;
                      background:linear-gradient(180deg,var(--sky1),var(--sky2) 65%,var(--field) 65%,var(--field2))}
   .fullscreen .fsHide{display:none!important}
@@ -32,7 +32,7 @@
           repeating-linear-gradient(45deg,#00000008 0 10px,#ffffff14 10px 20px),
           linear-gradient(180deg,var(--field),var(--field2))}
 
-  .sprite{position:absolute;transform:translate(-50%,-50%) scale(var(--scale,1));user-select:none;touch-action:none}
+  .sprite{position:absolute;transform:translate(-50%,-50%) scale(var(--scale,1));user-select:none}
   svg{display:block}
   .qtag{position:absolute; transform:translate(-50%,-50%); font-weight:900; font-size:22px; color:#1b1b1b;
         text-shadow:0 1px 0 #fff9; padding:6px 12px; border-radius:12px; background:#fffdf2; border:1px solid #0001}
@@ -58,13 +58,26 @@
   }
   .baby{ z-index: 6; }
   .mom{ z-index: 5; }
+
+  /* Edge arrow buttons */
+  .edgeBtn{
+    position:absolute; display:grid; place-items:center;
+    width:72px; height:72px; border-radius:18px;
+    background:#ffffffc0; border:1px solid #0002; box-shadow:0 6px 16px #0003;
+    font-size:34px; font-weight:900; color:#123; user-select:none; cursor:pointer;
+  }
+  .edgeBtn:active{ transform:translate(-50%,-50%) scale(0.96); }
+  #arrowL{ left:18px; top:50%; transform:translate(-50%,-50%); }
+  #arrowR{ right:18px; top:50%; transform:translate(50%,-50%); }
+  #arrowU{ top:18px; left:50%; transform:translate(-50%,-50%); }
+  #arrowD{ bottom:18px; left:50%; transform:translate(-50%,50%); }
 </style>
 </head>
 <body>
 <div class="app">
   <button id="exitFS" title="Back to menu">✖</button>
   <header class="fsHide">
-    <h1>🦊 Find Mama Fox — <span style="font-weight:900">Tilt Edition</span> <small style="font-size:12px;color:#4a5a6b">snakes that split!</small></h1>
+    <h1>🦊 Find Mama Fox — <span style="font-weight:900">Arrow Edition</span> <small style="font-size:12px;color:#4a5a6b">snakes that split!</small></h1>
     <div class="hud">
       <div class="pill">Table: <b id="tblNow">2</b>× <span id="tblHint" style="color:#4a5a6b"></span></div>
       <div class="pill meter" style="width:160px"><span id="sizeBar"></span></div>
@@ -77,9 +90,9 @@
   <section class="card fsHide">
     <div style="font-weight:800">What’s new</div>
     <ul style="margin:8px 0 0 22px">
-      <li>Baby fox starts **2× smaller** (and never bigger than moms).</li>
-      <li>Even after **5 in a row**, the game **stays on the same table** (no auto-advance).</li>
-      <li>One-time snake knockback + grace period; big snakes split into two.</li>
+      <li>Baby fox starts **5× smaller** than moms.</li>
+      <li>**Auto-advance**: after **5 in a row**, unlocks the next table (after 11×: sub-levels 1→4).</li>
+      <li>Removed **tilt** and **drag**. Use **arrow keys** (on-screen or keyboard).</li>
     </ul>
     <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
       <button class="btn" id="play">Play ▶</button>
@@ -87,20 +100,17 @@
     </div>
   </section>
 
-  <div id="field"><div class="ground"></div></div>
+  <div id="field">
+    <div class="ground"></div>
+    <!-- On-screen arrow keys at mid-edges -->
+    <div class="edgeBtn" id="arrowL" aria-label="Move left">◀</div>
+    <div class="edgeBtn" id="arrowR" aria-label="Move right">▶</div>
+    <div class="edgeBtn" id="arrowU" aria-label="Move up">▲</div>
+    <div class="edgeBtn" id="arrowD" aria-label="Move down">▼</div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
-
-<!-- Tilt permission (iOS) -->
-<div id="tiltGate" style="display:none">
-  <div id="tiltCard" style="background:#fff;border-radius:16px;border:1px solid #0002;padding:16px;max-width:420px;text-align:center;box-shadow:0 20px 40px #0003">
-    <h3>Enable Tilt Controls</h3>
-    <p>On iPad/iPhone, Apple requires your permission to use motion sensors.</p>
-    <button class="btn" id="enableTilt">Enable Tilt</button>
-    <div style="margin-top:8px;color:#4a5a6b;font-size:13px">If you don’t allow, you can still use arrows, drag, or tap.</div>
-  </div>
-</div>
 
 <script>
 (function(){
@@ -112,28 +122,28 @@
   const ORDER = [2,3,1,10,5,11,4,6,7,8,9,12];
   const POS_OF_11 = ORDER.indexOf(11);
 
-  const KEY = 'foxSnakeSplit:v2';
+  const KEY = 'foxArrowSplit:v1';
   let currentPos = 0, highestPos = 0, sublevel = 1;
   let soundOn = true;
 
-  // Streak counter (for your “5 correct” rule)
+  // Streak for auto-advance
   let streak = 0;
 
-  // Sizes (baby is 2× smaller by starting at 0.5)
+  // Sizes (baby 5× smaller than moms)
   const BABY_HALF = 60, MAMA_HALF = 74;
-  const startScale = 0.5, MAX_SCALE = 0.8, MIN_SCALE = 0.4;
+  const startScale = 0.2, MAX_SCALE = 0.35, MIN_SCALE = 0.18; // stays tiny
   let scale = startScale;
 
-  // Motion
-  let tiltX=0, tiltY=0, keyX=0, keyY=0, dragging=false, dragX=0, dragY=0;
-  let seek=null;
-  let knock=null;          // single bounce impulse
-  let snakeCooldown=0;     // grace period after a hit
+  // Motion (keyboard + on-screen arrows only)
+  let keyX=0, keyY=0;
+  let seek=null;             // auto-run toward tapped mama
+  let knock=null;            // single bounce impulse
+  let snakeCooldown=0;       // grace period after snake hit
 
   // Round
   let round = { q:null, baby:null, mamas:[], picking:false };
 
-  // ---------- Snakes (multiple) ----------
+  // ---------- Snakes ----------
   const segSpacing = 18;
   const SNAKE_START_LEN = 12;
   const SNAKE_SPEED = 2.2;
@@ -144,12 +154,11 @@
   // ---------- UI ----------
   const field = $('#field'), toast = $('#toast'), sizeBar = $('#sizeBar');
   const tblNow = $('#tblNow'), tblHint = $('#tblHint'), unlockMsg = $('#unlockMsg');
-  const tiltGate = $('#tiltGate'), enableTiltBtn = $('#enableTilt');
 
   function groundHeight(){ const g = field.querySelector('.ground'); const h= parseFloat(getComputedStyle(g).height)||field.clientHeight*0.14; return Math.max(110,h); }
   function toastMsg(s,ms=1100){ toast.textContent=s; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), ms); }
 
-  // ---------- Audio (tiny beeps) ----------
+  // ---------- Audio ----------
   const audioCtx = typeof AudioContext!=='undefined' ? new AudioContext() : null;
   function beep(freq=700, dur=.07, type='triangle', vol=.11){ if(!audioCtx||!soundOn) return;
     const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=vol;
@@ -187,16 +196,15 @@
   // ---------- HUD ----------
   function updateSizeBar(){ sizeBar.style.width = ((scale-MIN_SCALE)/(MAX_SCALE-MIN_SCALE))*100 + '%'; }
   function updateTableHud(){
-    const now=ORDER[currentPos];
+    const now=ORDER[currentPos], next=ORDER[currentPos+1]??ORDER[currentPos];
     $('#tblNow').textContent=now;
-    // Explicit message: no auto-advance
-    $('#tblHint').textContent = '(stay on this table — no auto-advance)';
+    $('#tblHint').textContent = currentPos<ORDER.length-1 ? `(next: ${next}× after 5 hugs)` : '(all tables done)';
   }
 
   // ---------- Questions ----------
   function isAfter11(){ return currentPos>POS_OF_11; }
   function currentNumOptions(){ return isAfter11()? Math.max(1,Math.min(4,sublevel)) : 4; }
-  function pickTable(){ if(Math.random()<.6) return ORDER[currentPos]; const u=ORDER.slice(0,currentPos+1); return u[rnd(0,u.length-1)]; }
+  function pickTable(){ if(Math.random()<.6) return ORDER[currentPos]; const u=ORDER.slice(0,highestPos+1||1); return u[rnd(0,u.length-1)]; }
   function genQ(){
     const a=pickTable(), b=rnd(1,12), ans=a*b, need=currentNumOptions()-1, wrongs=new Set();
     while(wrongs.size<need){ const g=Math.max(1,Math.min(144, ans + rnd(-10,10))); if(g!==ans) wrongs.add(g); }
@@ -215,7 +223,6 @@
   }
 
   // ---------- Snakes helpers ----------
-  const segSpacing = 18;
   function removeSnakeFromDOM(sn){ sn.segs.forEach(s=>s.el.remove()); }
   function createSnake(x,y,dirX,dirY,len){
     const segs=[];
@@ -223,7 +230,7 @@
       const d=document.createElement('div'); d.className='snake-seg'; field.appendChild(d);
       segs.push({x:x - dirX*i*segSpacing, y:y - dirY*i*segSpacing, el:d});
     }
-    return {segs, dir:{x:dirX,y:dirY}, turn:rnd(30,90), speed:2.2};
+    return {segs, dir:{x:dirX,y:dirY}, turn:rnd(30,90), speed:SNAKE_SPEED};
   }
   function renderSnake(sn){ for(const s of sn.segs){ s.el.style.left=s.x+'px'; s.el.style.top=s.y+'px'; } }
   function updateSnake(sn){
@@ -240,7 +247,7 @@
     }
     renderSnake(sn);
   }
-  function growSnake(sn, by=6){
+  function growSnake(sn, by=GROW_BY){
     for(let i=0;i<by;i++){ const last=sn.segs[sn.segs.length-1]; const d=document.createElement('div'); d.className='snake-seg'; field.appendChild(d); sn.segs.push({x:last.x,y:last.y,el:d}); }
   }
   function totalLen(sn){ return sn.segs.length; }
@@ -254,7 +261,7 @@
     const s2 = createSnake(head.x, head.y, Math.cos(ang-0.7), Math.sin(ang-0.7), half);
     removeSnakeFromDOM(sn);
     snakes.splice(snIndex, 1, s1, s2);
-    snakeStartLen = Math.max(12, half);
+    snakeStartLen = Math.max(SNAKE_START_LEN, half);
     toastMsg('🐍 The big snake split into two!');
   }
 
@@ -278,7 +285,7 @@
       el.addEventListener('pointerdown', ev=>{ev.preventDefault(); if(round.picking) return; seek={x:p.x, y:p.y, target:obj}; el.style.filter='brightness(1.05) drop-shadow(0 3px 6px rgba(0,0,0,.15))'; setTimeout(()=>el.style.filter='',160);});
     });
 
-    // Baby fox (smaller)
+    // Baby fox (tiny)
     round.baby=svgBabyFox(); field.appendChild(round.baby);
     round.baby.style.setProperty('--scale', scale);
     const cx=w/2, cy=Math.min(h/2, h - groundHeight() - (BABY_HALF*scale) - 40);
@@ -286,33 +293,46 @@
     placeQTag(cx, cy - 70*scale, `${round.q.a} × ${round.q.b}`);
     round.picking=false;
 
-    // Snakes (start or restart)
+    // Snakes
     snakes = [ createSnake(w*0.25, h*0.5, 1, 0, snakeStartLen) ];
     snakeCooldown = 0; knock=null;
   }
 
-  // ---------- Handle pick ----------
+  // ---------- Handle pick & auto-advance ----------
   function onPick(t){
     if(round.picking) return; round.picking=true;
     round.baby.style.left=t.x+'px'; round.baby.style.top=t.y+'px';
     placeQTag(t.x, t.y - 70*scale, `${round.q.a} × ${round.q.b}`);
     if(t.correct){
       chirp(); round.baby.classList.add('hug'); t.el.classList.add('hug');
-      streak++; // count, but do NOT change timetable
-      if(streak>=5){ toastMsg('🎉 5 in a row! Keep practising this table.'); }
+      streak++; // after 5 in a row -> advance (tables or post-11 sublevels)
       scale = Math.min(MAX_SCALE, scale*1.04); round.baby.style.setProperty('--scale', scale); updateSizeBar();
+
+      if(streak>=5){
+        streak=0;
+        if(currentPos > POS_OF_11 && sublevel < 4){
+          sublevel++;
+          toastMsg(`Sublevel ${sublevel} unlocked!`);
+        }else if(currentPos < ORDER.length-1){
+          currentPos++; highestPos=Math.max(highestPos,currentPos);
+          sublevel = (currentPos > POS_OF_11) ? 1 : 1;
+          unlockMsg.textContent = `Unlocked ${ORDER[currentPos]}×!`;
+          setTimeout(()=> unlockMsg.textContent='', 1800);
+        }
+        save(); updateTableHud();
+      }
       setTimeout(()=>{ seek=null; nextRound(); }, 650);
     }else{
       squawk(); t.el.classList.add('shake');
-      streak = 0; // reset streak on wrong
+      streak = 0;
       scale = Math.max(MIN_SCALE, scale*0.94); round.baby.style.setProperty('--scale', scale); updateSizeBar();
       setTimeout(()=>{ seek=null; nextRound(); }, 600);
     }
   }
 
-  // ---------- Collisions ----------
+  // ---------- Snake collisions ----------
   function trySnakeHit(){
-    if(snakeCooldown>0 || knock) return false; // one-time bounce & grace period
+    if(snakeCooldown>0 || knock) return false;
     const bx=parseFloat(round.baby.style.left), by=parseFloat(round.baby.style.top), br=BABY_HALF*scale*0.6;
     for(let i=0;i<snakes.length;i++){
       const sn=snakes[i];
@@ -320,11 +340,10 @@
         const dx=sg.x-bx, dy=sg.y-by, dist=Math.hypot(dx,dy);
         if(dist < br+12){
           const mag = Math.hypot(-dx,-dy)||1;
-          const kx=(-dx/mag)*1.5, ky=(-dy/mag)*1.5; // single impulse away
+          const kx=(-dx/mag)*1.5, ky=(-dy/mag)*1.5;
           knock={vx:kx, vy:ky, frames:22};
-          snakeCooldown=28;  // ignore further hits briefly
-          growSnake(sn);
-          splitIfNeeded(i);
+          snakeCooldown=28;
+          growSnake(sn); splitIfNeeded(i);
           toastMsg('🐍 Boop! Snake grew longer.');
           return true;
         }
@@ -338,24 +357,25 @@
     if(!round.baby){ requestAnimationFrame(loop); return; }
     const w=field.clientWidth, h=field.clientHeight;
 
-    // Update snakes first
+    // Update snakes
     snakes.forEach(updateSnake);
 
-    // Inputs
-    let NX=Math.max(-1,Math.min(1, tiltX+keyX+dragX));
-    let NY=Math.max(-1,Math.min(1, tiltY+keyY+dragY));
+    // Inputs (keyboard + on-screen)
+    let NX = keyX, NY = keyY;
 
-    // Single knockback impulse
-    if(knock && knock.frames>0){ NX=knock.vx; NY=knock.vy; knock.frames--; if(knock.frames<=0) knock=null; }
-    else if(seek){ // auto-run to mama
+    // Knockback overrides; seek next
+    if(knock && knock.frames>0){
+      NX=knock.vx; NY=knock.vy; knock.frames--; if(knock.frames<=0) knock=null;
+    }else if(seek){
       const x=parseFloat(round.baby.style.left), y=parseFloat(round.baby.style.top);
-      const dx=seek.x-x, dy=seek.y-y, mag=Math.hypot(dx,dy)||1; NX=dx/mag; NY=dy/mag; if(mag<64){ onPick(seek.target); requestAnimationFrame(loop); return; }
+      const dx=seek.x-x, dy=seek.y-y, mag=Math.hypot(dx,dy)||1; NX=dx/mag; NY=dy/mag;
+      if(Math.hypot(dx,dy)<64){ onPick(seek.target); requestAnimationFrame(loop); return; }
     }
 
     // Move baby
     const SPEED=560/60;
-    let x=parseFloat(round.baby.style.left)+NX*SPEED;
-    let y=parseFloat(round.baby.style.top)+NY*SPEED;
+    let x=parseFloat(round.baby.style.left)+(NX*SPEED);
+    let y=parseFloat(round.baby.style.top)+(NY*SPEED);
     const half=BABY_HALF*scale, pad=10, bottom=h-groundHeight()-half-pad, left=half+pad, right=w-half-pad, top=half+pad;
     if(y>=bottom && NY>0) NY=0;
     x=clamp(x,left,right); y=clamp(y,top,bottom);
@@ -365,36 +385,35 @@
     // Mama proximity = pick
     for(const m of round.mamas){ const mx=parseFloat(m.el.style.left), my=parseFloat(m.el.style.top); if(Math.hypot(mx-x,my-y)<70){ onPick(m); break; } }
 
-    // Snake hit (only once per grace window)
-    trySnakeHit();
-    if(snakeCooldown>0) snakeCooldown--;
+    // Snake hit
+    trySnakeHit(); if(snakeCooldown>0) snakeCooldown--;
 
     requestAnimationFrame(loop);
   }
 
-  // ---------- Tilt / controls ----------
-  function initTilt(){
-    function handle(e){
-      const g=e.gamma||0, b=e.beta||0, dead=2;
-      const nx=Math.abs(g)<dead?0:Math.max(-1,Math.min(1,g/20));
-      const ny=Math.abs(b)<dead?0:Math.max(-1,Math.min(1,(b-0)/25));
-      tiltX=tiltX*.7+nx*.3; tiltY=tiltY*.7+ny*.3;
-    }
-    if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
-      tiltGate.style.display='flex';
-      enableTiltBtn.onclick=async()=>{ try{ const r=await DeviceOrientationEvent.requestPermission(); if(r==='granted') window.addEventListener('deviceorientation',handle); }finally{ tiltGate.style.display='none'; } };
-    }else if(typeof DeviceOrientationEvent!=='undefined'){ window.addEventListener('deviceorientation',handle); }
+  // ---------- Keyboard + on-screen arrows ----------
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft')  keyX=-1;
+    if(e.key==='ArrowRight') keyX= 1;
+    if(e.key==='ArrowUp')    keyY=-1;
+    if(e.key==='ArrowDown')  keyY= 1;
+  });
+  document.addEventListener('keyup',e=>{
+    if(['ArrowLeft','ArrowRight'].includes(e.key)) keyX=0;
+    if(['ArrowUp','ArrowDown'].includes(e.key)) keyY=0;
+  });
+  function bindEdge(btn, dx, dy){
+    const start=()=>{ keyX=dx; keyY=dy; };
+    const stop =()=>{ if(keyX===dx) keyX=0; if(keyY===dy) keyY=0; };
+    btn.addEventListener('pointerdown', e=>{ e.preventDefault(); start(); btn.setAttribute('data-on',''); });
+    btn.addEventListener('pointerup',   stop);
+    btn.addEventListener('pointerleave',stop);
+    btn.addEventListener('lostpointercapture', stop);
   }
-  document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft')keyX=-1; if(e.key==='ArrowRight')keyX=1; if(e.key==='ArrowUp')keyY=-1; if(e.key==='ArrowDown')keyY=1; });
-  document.addEventListener('keyup',e=>{ if(['ArrowLeft','ArrowRight'].includes(e.key))keyX=0; if(['ArrowUp','ArrowDown'].includes(e.key))keyY=0; });
-  field.addEventListener('touchstart',()=>{dragging=true;},{passive:true});
-  field.addEventListener('touchend',()=>{dragging=false;dragX=0;dragY=0;},{passive:true});
-  field.addEventListener('touchmove',e=>{ if(!dragging) return; const t=e.touches[0], r=field.getBoundingClientRect();
-    const cx=parseFloat(round.baby.style.left), cy=parseFloat(round.baby.style.top);
-    const tx=t.clientX-r.left, ty=t.clientY-r.top, dx=tx-cx, dy=ty-cy, m=Math.hypot(dx,dy)||1; dragX=dx/m; dragY=dy/m; }, {passive:true});
-  field.addEventListener('mousemove',e=>{ if(!e.buttons){dragX=0;dragY=0;return;} const r=field.getBoundingClientRect();
-    const cx=parseFloat(round.baby.style.left), cy=parseFloat(round.baby.style.top);
-    const tx=e.clientX-r.left, ty=e.clientY-r.top, dx=tx-cx, dy=ty-cy, m=Math.hypot(dx,dy)||1; dragX=dx/m; dragY=dy/m; });
+  bindEdge($('#arrowL'), -1,  0);
+  bindEdge($('#arrowR'),  1,  0);
+  bindEdge($('#arrowU'),  0, -1);
+  bindEdge($('#arrowD'),  0,  1);
 
   // ---------- Save/Load ----------
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ currentPos, highestPos, sublevel, scale, snakeStartLen })); }catch(e){} }
@@ -404,7 +423,7 @@
 
   // ---------- Reset & buttons ----------
   function hardReset(){ currentPos=0; highestPos=0; sublevel=1; scale=startScale; snakeStartLen=SNAKE_START_LEN; streak=0; updateSizeBar(); updateTableHud(); save(); nextRound(); }
-  $('#play').onclick=()=>{ document.body.classList.add('fullscreen'); load(); updateTableHud(); updateSizeBar(); initTilt(); nextRound(); loop(); };
+  $('#play').onclick=()=>{ document.body.classList.add('fullscreen'); load(); updateTableHud(); updateSizeBar(); nextRound(); loop(); };
   $('#reset').onclick=()=>{ hardReset(); toastMsg('Reset'); };
   $('#clear').onclick=()=>{ try{localStorage.removeItem(KEY);}catch(e){} hardReset(); toastMsg('Progress cleared'); };
   $('#mute').onclick=()=>{ soundOn=!soundOn; $('#mute').textContent= soundOn? '🔊 Sound':'🔇 Muted'; };
