@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find Mama Fox — Tilt Edition (with Snake!)</title>
+<style>
+  :root{
+    --sky1:#bfe6ff; --sky2:#8cc7ff; --field:#9adf76; --field2:#6bbb49;
+    --ink:#0b1a28; --muted:#4a5a6b; --good:#22c55e; --bad:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;color:var(--ink);
+       background:linear-gradient(180deg,var(--sky1),var(--sky2) 65%,var(--field) 65%,var(--field2))}
+  .app{max-width:980px;margin:0 auto;padding:10px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  h1{font-size:clamp(22px,3vw,32px);margin:6px 0}
+  .hud{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .pill{background:rgba(255,255,255,.8);border:1px solid #0001;border-radius:999px;padding:6px 10px;font-weight:800;display:flex;gap:6px;align-items:center}
+  .btn{appearance:none;border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;
+       background:linear-gradient(180deg,#ffe082,#f6c453);color:#462c00;box-shadow:0 6px 14px #0002,inset 0 1px 0 #fff9}
+  .btn.small{padding:6px 10px;border-radius:10px;font-size:13px}
+  .btn.ghost{background:transparent;border:1px solid #0003;color:#123}
+  .card{background:rgba(255,255,255,.7);border:1px solid #0002;border-radius:16px;padding:12px 14px;margin-top:12px;backdrop-filter:blur(6px)}
+
+  #field{position:relative;height:60vh;min-height:480px;border-radius:18px;overflow:hidden;border:1px solid #0002;background:transparent}
+  .fullscreen #field{position:fixed;inset:0;height:100vh;min-height:100vh;border-radius:0;z-index:20;
+                     background:linear-gradient(180deg,var(--sky1),var(--sky2) 65%,var(--field) 65%,var(--field2))}
+  .fullscreen .fsHide{display:none!important}
+  #exitFS{display:none;position:fixed;right:14px;top:14px;z-index:40;background:#0008;border:1px solid #fff5;color:#fff;border-radius:999px;padding:10px 12px;font-weight:900;cursor:pointer}
+  .fullscreen #exitFS{display:block}
+  .ground{position:absolute;left:0;right:0;bottom:0;height:14vh;min-height:110px;background:
+          repeating-linear-gradient(45deg,#00000008 0 10px,#ffffff14 10px 20px),
+          linear-gradient(180deg,var(--field),var(--field2))}
+
+  .sprite{position:absolute;transform:translate(-50%,-50%) scale(var(--scale,1));user-select:none;touch-action:none}
+  svg{display:block}
+  .qtag{position:absolute; transform:translate(-50%,-50%); font-weight:900; font-size:22px; color:#1b1b1b;
+        text-shadow:0 1px 0 #fff9; padding:6px 12px; border-radius:12px; background:#fffdf2; border:1px solid #0001}
+
+  .mom .label{position:absolute; left:50%; top:62%; transform:translate(-50%,-50%); font-weight:900; font-size:22px; color:#1b1b1b; text-shadow:0 1px 0 #fff9}
+  .hug{animation:hug .6s ease forwards}
+  @keyframes hug{0%{transform:translate(-50%,-50%) scale(var(--scale,1))}30%{transform:translate(-50%,-50%) scale(calc(var(--scale,1)*1.06))}100%{transform:translate(-50%,-50%) scale(var(--scale,1))}}
+  .shake{animation:shake .45s ease}
+  @keyframes shake{0%,100%{transform:translate(-50%,-50%) scale(var(--scale,1))}30%{transform:translate(calc(-50% - 8px),-50%) scale(var(--scale,1))}70%{transform:translate(calc(-50% + 8px),-50%) scale(var(--scale,1))}}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:50;background:#111c;color:#fff;
+         border-radius:12px;padding:8px 12px;box-shadow:0 8px 26px #0005;opacity:0;transition:opacity .25s, transform .25s;pointer-events:none}
+  .toast.show{opacity:1;transform:translate(-50%,-4px)}
+  .meter{height:10px;border-radius:999px;background:#ffffffaa;border:1px solid #0002;overflow:hidden}
+  .meter>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#22c55
