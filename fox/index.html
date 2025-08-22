@@ -3,12 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Find Mama Fox — Tilt Edition (with Snake!)</title>
+<title>Find Mama Fox — Tilt Edition (Snakes Split!)</title>
 <style>
-  :root{
-    --sky1:#bfe6ff; --sky2:#8cc7ff; --field:#9adf76; --field2:#6bbb49;
-    --ink:#0b1a28; --muted:#4a5a6b; --good:#22c55e; --bad:#ef4444;
-  }
+  :root{ --sky1:#bfe6ff; --sky2:#8cc7ff; --field:#9adf76; --field2:#6bbb49;
+         --ink:#0b1a28; --muted:#4a5a6b; }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;color:var(--ink);
@@ -38,8 +36,8 @@
   svg{display:block}
   .qtag{position:absolute; transform:translate(-50%,-50%); font-weight:900; font-size:22px; color:#1b1b1b;
         text-shadow:0 1px 0 #fff9; padding:6px 12px; border-radius:12px; background:#fffdf2; border:1px solid #0001}
-
   .mom .label{position:absolute; left:50%; top:62%; transform:translate(-50%,-50%); font-weight:900; font-size:22px; color:#1b1b1b; text-shadow:0 1px 0 #fff9}
+
   .hug{animation:hug .6s ease forwards}
   @keyframes hug{0%{transform:translate(-50%,-50%) scale(var(--scale,1))}30%{transform:translate(-50%,-50%) scale(calc(var(--scale,1)*1.06))}100%{transform:translate(-50%,-50%) scale(var(--scale,1))}}
   .shake{animation:shake .45s ease}
@@ -51,10 +49,6 @@
   .meter{height:10px;border-radius:999px;background:#ffffffaa;border:1px solid #0002;overflow:hidden}
   .meter>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#22c55e,#3b82f6)}
 
-  .ring{display:flex;align-items:center;gap:8px}
-  .ring svg{width:44px;height:44px}
-  .ring .label{font-weight:800}
-
   /* Snake */
   .snake-seg{
     position:absolute; width:20px; height:20px; border-radius:50%;
@@ -62,7 +56,7 @@
     box-shadow: 0 2px 6px #0003; transform:translate(-50%,-50%);
     z-index: 4;
   }
-  .baby{ z-index: 6; }  /* baby fox above snake */
+  .baby{ z-index: 6; }
   .mom{ z-index: 5; }
 </style>
 </head>
@@ -70,17 +64,9 @@
 <div class="app">
   <button id="exitFS" title="Back to menu">✖</button>
   <header class="fsHide">
-    <h1>🦊 Find Mama Fox — <span style="font-weight:900">Tilt Edition</span> <small style="font-size:12px;color:#4a5a6b">+ snake</small></h1>
+    <h1>🦊 Find Mama Fox — <span style="font-weight:900">Tilt Edition</span> <small style="font-size:12px;color:#4a5a6b">snakes that split!</small></h1>
     <div class="hud">
-      <div class="pill ring" title="Hugs toward unlock">
-        <svg viewBox="0 0 40 40" aria-hidden="true">
-          <circle cx="20" cy="20" r="17" stroke="#0002" stroke-width="4" fill="none"/>
-          <circle cx="20" cy="20" r="17" stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(-90 20 20)"
-                  stroke-dasharray="0 106" id="ringProg"/>
-        </svg>
-        <span class="label" id="ringNum">0</span>
-      </div>
-      <div class="pill" style="min-width:140px;text-align:center">Table: <b id="tblNow">2</b>× <span id="tblHint" style="color:#4a5a6b"></span></div>
+      <div class="pill">Table: <b id="tblNow">2</b>× <span id="tblHint" style="color:#4a5a6b"></span></div>
       <div class="pill meter" style="width:160px"><span id="sizeBar"></span></div>
       <button class="btn small" id="mute">🔊 Sound</button>
       <button class="btn small" id="reset">Reset</button>
@@ -91,11 +77,9 @@
   <section class="card fsHide">
     <div style="font-weight:800">What’s new</div>
     <ul style="margin:8px 0 0 22px">
-      <li>Baby <b>fox</b> replaces chick; mamas are <b>foxes</b>.</li>
-      <li>Mamas spawn at the <b>corners</b> (TL, TR, BR, BL).</li>
-      <li>A friendly <b>snake</b> wanders. If it bumps the baby fox, it grows longer and the baby bounces back.</li>
-      <li>Longer snake = more obstacle to reach a mama.</li>
-      <li>Tap any mama to auto-run to her; tilt to steer; arrow keys/drag still work.</li>
+      <li>One-time **bounce** away from the snake (with a short safety window).</li>
+      <li>When a snake grows to **2×** its original length, it **splits into two** smaller snakes.</li>
+      <li>Mama foxes stay at the **corners**; tap a mama to auto-run to her. Tilt / drag / arrows all work.</li>
     </ul>
     <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
       <button class="btn" id="play">Play ▶</button>
@@ -103,20 +87,18 @@
     </div>
   </section>
 
-  <div id="field">
-    <div class="ground"></div>
-  </div>
+  <div id="field"><div class="ground"></div></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- Tilt permission gate (iOS) -->
+<!-- Tilt permission (iOS) -->
 <div id="tiltGate" style="display:none">
   <div id="tiltCard" style="background:#fff;border-radius:16px;border:1px solid #0002;padding:16px;max-width:420px;text-align:center;box-shadow:0 20px 40px #0003">
     <h3>Enable Tilt Controls</h3>
     <p>On iPad/iPhone, Apple requires your permission to use motion sensors.</p>
     <button class="btn" id="enableTilt">Enable Tilt</button>
-    <div style="margin-top:8px;color:#4a5a6b;font-size:13px">If you don’t allow, you can still use the arrow keys, drag, or tap mamas.</div>
+    <div style="margin-top:8px;color:#4a5a6b;font-size:13px">If you don’t allow, you can still use arrows, drag, or tap.</div>
   </div>
 </div>
 
@@ -126,513 +108,303 @@
   const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
   const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
 
-  // ---------- Game order & state ----------
+  // ---------- Tables & state ----------
   const ORDER = [2,3,1,10,5,11,4,6,7,8,9,12];
   const POS_OF_11 = ORDER.indexOf(11);
 
-  const KEY = 'foxSnake:v1';
-  let currentPos = 0;
-  let highestPos = 0;
-  let consecCorrect = 0;
-  let sublevel = 1;
+  const KEY = 'foxSnakeSplit:v1';
+  let currentPos = 0, highestPos = 0, sublevel = 1;
   let soundOn = true;
 
-  // Baby fox size mechanic (kept, but capped)
-  const BABY_HALF = 60;
-  const MAMA_HALF = 74;
-  const startScale = 1;
-  const MAX_SCALE = 1.18;
-  const MIN_SCALE = 0.5;
-  let scale = startScale, hasBeenAboveBaseline = false;
+  // Sizes
+  const BABY_HALF = 60, MAMA_HALF = 74;
+  const startScale = 1, MAX_SCALE = 1.18, MIN_SCALE = 0.5;
+  let scale = startScale;
 
-  // Motion state
-  let tiltX = 0, tiltY = 0;     // -1..1 range
-  let keyX = 0, keyY = 0;       // keyboard fallback
-  let dragging = false, dragX=0, dragY=0;
-  let seek = null;              // {x,y,target}
-  let knock = null;             // {vx,vy,frames} bounce from snake
+  // Motion
+  let tiltX=0, tiltY=0, keyX=0, keyY=0, dragging=false, dragX=0, dragY=0;
+  let seek=null;
+  let knock=null;          // single bounce impulse
+  let snakeCooldown=0;     // grace period after a hit
 
-  // Round state
+  // Round
   let round = { q:null, baby:null, mamas:[], picking:false };
 
-  // Snake state
-  let snake = [];               // [{x,y,el}]
-  let snakeLen = 12;            // segments
-  let snakeSpeed = 2.2;         // px per frame
-  let snakeDir = {x:1,y:0};     // unit dir, wander changes it
-  const segSpacing = 18;        // px
-  const snakeGrowBy = 6;        // segments to add on hit
-  let snakeTurnTimer = 0;
+  // ---------- Snakes (multiple) ----------
+  const segSpacing = 18;
+  const SNAKE_START_LEN = 12;
+  const SNAKE_SPEED = 2.2;
+  const GROW_BY = 6;
+  let snakeStartLen = SNAKE_START_LEN;
+  let snakes = []; // [{segs:[{x,y,el}], dir:{x,y}, turn:number, speed:number}]
 
-  // UI refs
-  const field = $('#field');
-  const toast = $('#toast'), sizeBar = $('#sizeBar');
+  // ---------- UI ----------
+  const field = $('#field'), toast = $('#toast'), sizeBar = $('#sizeBar');
   const tblNow = $('#tblNow'), tblHint = $('#tblHint'), unlockMsg = $('#unlockMsg');
-  const ringNum = $('#ringNum'), ringProg = $('#ringProg');
   const tiltGate = $('#tiltGate'), enableTiltBtn = $('#enableTilt');
 
-  // ---------- Helpers ----------
-  function groundHeight(){
-    const g = field.querySelector('.ground');
-    const hpx = parseFloat(getComputedStyle(g).height) || (field.clientHeight*0.14);
-    return Math.max(110, hpx);
-  }
-  function toastMsg(s,ms=1200){ toast.textContent=s; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), ms); }
+  function groundHeight(){ const g = field.querySelector('.ground'); const h= parseFloat(getComputedStyle(g).height)||field.clientHeight*0.14; return Math.max(110,h); }
+  function toastMsg(s,ms=1100){ toast.textContent=s; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), ms); }
 
-  // ---------- Audio ----------
+  // ---------- Audio (tiny beeps) ----------
   const audioCtx = typeof AudioContext!=='undefined' ? new AudioContext() : null;
-  function beep(freq=700, dur=.07, type='triangle', vol=.11){
-    if(!audioCtx || !soundOn) return;
-    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-    o.type=type; o.frequency.value=freq; g.gain.value=vol;
-    o.connect(g).connect(audioCtx.destination); o.start();
-    setTimeout(()=>{ g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur); }, 0);
-    o.stop(audioCtx.currentTime+dur+.01);
+  function beep(freq=700, dur=.07, type='triangle', vol=.11){ if(!audioCtx||!soundOn) return;
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g).connect(audioCtx.destination); o.start(); setTimeout(()=>{ g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur); }, 0); o.stop(audioCtx.currentTime+dur+.01);
   }
-  function chirp(){ beep(900,.07,'triangle',.12); setTimeout(()=>beep(1050,.07,'triangle',.10), 60); }
-  function squawk(){ beep(320,.09,'sawtooth',.15); }
-  function ssslither(){ beep(500,.05,'sine',.07); }
+  const chirp=()=>{beep(900,.07,'triangle',.12); setTimeout(()=>beep(1050,.07,'triangle',.1),60);}
+  const squawk=()=>beep(320,.09,'sawtooth',.15);
 
-  // ---------- Sprites (foxes) ----------
+  // ---------- Sprites ----------
   function svgBabyFox(){
     const el=document.createElement('div'); el.className='sprite baby'; el.style.setProperty('--scale', scale);
     el.innerHTML=`<svg width="130" height="120" viewBox="0 0 130 120" aria-hidden="true">
       <defs><radialGradient id="gF" cx="45%" cy="35%" r="70%"><stop offset="0%" stop-color="#ffd6a1"/><stop offset="100%" stop-color="#ff9b3f"/></radialGradient></defs>
-      <polygon points="36,24 48,8 56,26" fill="#ff7f2a"/>
-      <polygon points="74,24 86,8 94,26" fill="#ff7f2a"/>
+      <polygon points="36,24 48,8 56,26" fill="#ff7f2a"/><polygon points="74,24 86,8 94,26" fill="#ff7f2a"/>
       <ellipse cx="65" cy="65" rx="46" ry="36" fill="url(#gF)" stroke="#00000024"/>
-      <circle cx="52" cy="58" r="4.6" fill="#1b1b1b"/>
-      <circle cx="72" cy="58" r="4.6" fill="#1b1b1b"/>
+      <circle cx="52" cy="58" r="4.6" fill="#1b1b1b"/><circle cx="72" cy="58" r="4.6" fill="#1b1b1b"/>
       <polygon points="62,64 74,70 62,76" fill="#ffdfc7"/>
       <line x1="50" y1="94" x2="50" y2="106" stroke="#b85618" stroke-width="4" stroke-linecap="round"/>
       <line x1="68" y1="94" x2="68" y2="106" stroke="#b85618" stroke-width="4" stroke-linecap="round"/>
-    </svg>`;
-    return el;
+    </svg>`; return el;
   }
   function svgMamaFox(){
     const el=document.createElement('div'); el.className='sprite mom';
     el.innerHTML=`<svg width="170" height="150" viewBox="0 0 170 150" aria-hidden="true">
       <defs><radialGradient id="gM" cx="45%" cy="35%" r="70%"><stop offset="0%" stop-color="#ffe0b8"/><stop offset="100%" stop-color="#ffab54"/></radialGradient></defs>
-      <polygon points="46,28 64,6 74,30" fill="#ff7f2a"/>
-      <polygon points="96,28 114,6 124,30" fill="#ff7f2a"/>
+      <polygon points="46,28 64,6 74,30" fill="#ff7f2a"/><polygon points="96,28 114,6 124,30" fill="#ff7f2a"/>
       <ellipse cx="85" cy="80" rx="58" ry="44" fill="url(#gM)" stroke="#00000024"/>
-      <circle cx="70" cy="66" r="5.2" fill="#1b1b1b"/>
-      <circle cx="94" cy="66" r="5.2" fill="#1b1b1b"/>
+      <circle cx="70" cy="66" r="5.2" fill="#1b1b1b"/><circle cx="94" cy="66" r="5.2" fill="#1b1b1b"/>
       <polygon points="76,72 96,80 76,88" fill="#ffe7d5"/>
       <line x1="66" y1="116" x2="66" y2="132" stroke="#b85618" stroke-width="5" stroke-linecap="round"/>
       <line x1="88" y1="116" x2="88" y2="132" stroke="#b85618" stroke-width="5" stroke-linecap="round"/>
-    </svg>
-    <div class="label">?</div>`;
-    return el;
+    </svg><div class="label">?</div>`; return el;
   }
 
   // ---------- HUD ----------
-  function updateSizeBar(){
-    const ratio = (scale - MIN_SCALE) / (MAX_SCALE - MIN_SCALE);
-    sizeBar.style.width = Math.max(0, Math.min(1, ratio))*100 + '%';
-  }
-  function updateRing(){
-    ringNum.textContent = consecCorrect;
-    const max = 5, C = 2 * Math.PI * 17;
-    const ratio = Math.max(0, Math.min(1, consecCorrect / max));
-    const dash = (C * ratio).toFixed(1);
-    ringProg.setAttribute('stroke-dasharray', `${dash} ${Math.max(0,C-dash).toFixed(1)}`);
-  }
+  function updateSizeBar(){ sizeBar.style.width = ((scale-MIN_SCALE)/(MAX_SCALE-MIN_SCALE))*100 + '%'; }
   function updateTableHud(){
-    const nowTbl = ORDER[currentPos];
-    const nextTbl = ORDER[currentPos+1] ?? ORDER[currentPos];
-    tblNow.textContent = nowTbl;
-    tblHint.textContent = currentPos < ORDER.length-1 ? `(next: ${nextTbl}× after 5 hugs)` : '(all tables done)';
+    const now=ORDER[currentPos], next=ORDER[currentPos+1]??ORDER[currentPos];
+    $('#tblNow').textContent=now; $('#tblHint').textContent = currentPos<ORDER.length-1 ? `(next: ${next}× after 5 hugs)` : '(all done)';
   }
 
   // ---------- Questions ----------
-  function isAfter11(){ return currentPos > POS_OF_11; }
-  function currentNumOptions(){ return isAfter11() ? Math.max(1, Math.min(4, sublevel)) : 4; }
-  function pickTableForQuestion(){
-    const biasWeight = 0.6;
-    if(Math.random() < biasWeight) return ORDER[currentPos];
-    const unlocked = ORDER.slice(0, highestPos+1);
-    return unlocked[rnd(0, unlocked.length-1)];
-  }
+  function isAfter11(){ return currentPos>POS_OF_11; }
+  function currentNumOptions(){ return isAfter11()? Math.max(1,Math.min(4,sublevel)) : 4; }
+  function pickTable(){ if(Math.random()<.6) return ORDER[currentPos]; const u=ORDER.slice(0,currentPos+1); return u[rnd(0,u.length-1)]; }
   function genQ(){
-    const a = pickTableForQuestion();
-    const b = rnd(1,12);
-    const ans = a * b;
-    const need = currentNumOptions() - 1;
-    const wrongs = new Set();
-    while(wrongs.size < need){
-      const delta = rnd(-10,10);
-      const g = Math.max(1, Math.min(144, ans+delta));
-      if(g!==ans) wrongs.add(g);
-    }
-    const opts = [ans, ...Array.from(wrongs)];
-    for(let i=opts.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [opts[i],opts[j]]=[opts[j],opts[i]]; }
+    const a=pickTable(), b=rnd(1,12), ans=a*b, need=currentNumOptions()-1, wrongs=new Set();
+    while(wrongs.size<need){ const g=Math.max(1,Math.min(144, ans + rnd(-10,10))); if(g!==ans) wrongs.add(g); }
+    const opts=[ans,...wrongs]; for(let i=opts.length-1;i>0;i--){ const j=(Math.random()* (i+1))|0; [opts[i],opts[j]]=[opts[j],opts[i]]; }
     return {a,b,ans,options:opts};
   }
 
   // ---------- Corner placement ----------
-  function cornersFor(n){
-    const all = ['tl','tr','br','bl'];
-    if(n>=4) return all;
-    const chosen = new Set();
-    while(chosen.size < n){ chosen.add(all[rnd(0,all.length-1)]); }
-    return Array.from(chosen);
-  }
-  function posForCorner(c,w,h){
-    const margin = 20, gh = groundHeight();
-    if(c==='tl') return {x: margin + MAMA_HALF, y: margin + MAMA_HALF};
-    if(c==='tr') return {x: w - margin - MAMA_HALF, y: margin + MAMA_HALF};
-    if(c==='br') return {x: w - margin - MAMA_HALF, y: h - gh - margin - MAMA_HALF};
-    if(c==='bl') return {x: margin + MAMA_HALF, y: h - gh - margin - MAMA_HALF};
+  function cornersFor(n){ const all=['tl','tr','br','bl']; if(n>=4) return all; const s=new Set(); while(s.size<n) s.add(all[rnd(0,all.length-1)]); return [...s]; }
+  function posForCorner(c,w,h){ const m=20, gh=groundHeight();
+    if(c==='tl') return {x:m+MAMA_HALF, y:m+MAMA_HALF};
+    if(c==='tr') return {x:w-m-MAMA_HALF, y:m+MAMA_HALF};
+    if(c==='br') return {x:w-m-MAMA_HALF, y:h-gh-m-MAMA_HALF};
+    if(c==='bl') return {x:m+MAMA_HALF, y:h-gh-m-MAMA_HALF};
     return {x:w/2,y:h/2};
   }
 
-  // ---------- Round control ----------
-  function clearSprites(){ field.querySelectorAll('.sprite,.fx,.qtag,.snake-seg').forEach(n=>n.remove()); }
-  let qTag=null;
-  function placeQTag(x,y,text){
-    if(!qTag){ qTag=document.createElement('div'); qTag.className='qtag'; field.appendChild(qTag); }
-    qTag.textContent = text;
-    qTag.style.left = x+'px'; qTag.style.top = y+'px';
+  // ---------- Snakes helpers ----------
+  function removeSnakeFromDOM(sn){ sn.segs.forEach(s=>s.el.remove()); }
+  function createSnake(x,y,dirX,dirY,len){
+    const segs=[];
+    for(let i=0;i<len;i++){
+      const d=document.createElement('div'); d.className='snake-seg'; field.appendChild(d);
+      segs.push({x:x - dirX*i*segSpacing, y:y - dirY*i*segSpacing, el:d});
+    }
+    return {segs, dir:{x:dirX,y:dirY}, turn:rnd(30,90), speed:SNAKE_SPEED};
   }
+  function renderSnake(sn){ for(const s of sn.segs){ s.el.style.left=s.x+'px'; s.el.style.top=s.y+'px'; } }
+  function updateSnake(sn){
+    const w=field.clientWidth, h=field.clientHeight, gh=groundHeight();
+    if(sn.turn--<=0){ sn.turn=rnd(30,90); const ang=Math.atan2(sn.dir.y,sn.dir.x)+(Math.random()-0.5)*0.9; sn.dir.x=Math.cos(ang); sn.dir.y=Math.sin(ang); }
+    const head=sn.segs[0];
+    head.x += sn.dir.x*sn.speed; head.y += sn.dir.y*sn.speed;
+    const m=20, L=m, R=w-m, T=m, B=h-gh-m;
+    if(head.x<L){ head.x=L; sn.dir.x*=-1 } if(head.x>R){ head.x=R; sn.dir.x*=-1 }
+    if(head.y<T){ head.y=T; sn.dir.y*=-1 } if(head.y>B){ head.y=B; sn.dir.y*=-1 }
+    for(let i=sn.segs.length-1;i>0;i--){
+      const a=sn.segs[i], b=sn.segs[i-1], dx=b.x-a.x, dy=b.y-a.y, dist=Math.hypot(dx,dy)||.0001, need=segSpacing;
+      if(dist>need){ a.x += (dx/dist)*(dist-need); a.y += (dy/dist)*(dist-need); }
+    }
+    renderSnake(sn);
+  }
+  function growSnake(sn, by=GROW_BY){
+    for(let i=0;i<by;i++){ const last=sn.segs[sn.segs.length-1]; const d=document.createElement('div'); d.className='snake-seg'; field.appendChild(d); sn.segs.push({x:last.x,y:last.y,el:d}); }
+  }
+  function totalLen(sn){ return sn.segs.length; }
+  function splitIfNeeded(snIndex){
+    const sn = snakes[snIndex];
+    if(totalLen(sn) < 2*snakeStartLen) return;
+    // Make two snakes of half the current length (≈ original size)
+    const half = Math.max(8, Math.floor(totalLen(sn)/2));
+    const head = sn.segs[0];
+    const ang = Math.atan2(sn.dir.y, sn.dir.x);
+    const s1 = createSnake(head.x, head.y, Math.cos(ang+0.7), Math.sin(ang+0.7), half);
+    const s2 = createSnake(head.x, head.y, Math.cos(ang-0.7), Math.sin(ang-0.7), half);
+    removeSnakeFromDOM(sn);
+    snakes.splice(snIndex, 1, s1, s2);
+    snakeStartLen = Math.max(SNAKE_START_LEN, half); // update baseline for future rounds
+    toastMsg('🐍 The big snake split into two!');
+  }
+
+  // ---------- Round control ----------
+  function clearSprites(){ field.querySelectorAll('.sprite,.qtag,.snake-seg').forEach(n=>n.remove()); }
+  let qTag=null; function placeQTag(x,y,t){ if(!qTag){ qTag=document.createElement('div'); qTag.className='qtag'; field.appendChild(qTag);} qTag.textContent=t; qTag.style.left=x+'px'; qTag.style.top=y+'px'; }
 
   function nextRound(){
     clearSprites(); if(qTag){ qTag.remove(); qTag=null; }
+    const w=field.clientWidth, h=field.clientHeight;
+    // Question
     round.q = genQ();
-    const w = field.clientWidth, h = field.clientHeight;
-    // Create mamas at corners
-    const n = currentNumOptions();
-    const cs = cornersFor(n);
-    const choices = round.q.options.slice(0,n); // already shuffled
-    round.mamas = [];
-    for(let i=0;i<n;i++){
-      const c = cs[i];
-      const el = svgMamaFox(); field.appendChild(el);
-      const p = posForCorner(c,w,h);
-      el.style.left = p.x+'px'; el.style.top = p.y+'px';
-      el.querySelector('.label').textContent = choices[i];
-      const obj = {el, val:choices[i], correct: choices[i]===round.q.ans, corner:c, x:p.x, y:p.y};
+    const n=currentNumOptions(), cs=cornersFor(n), choices=round.q.options.slice(0,n);
+    round.mamas=[];
+    cs.forEach((c,i)=>{
+      const el=svgMamaFox(); field.appendChild(el);
+      const p=posForCorner(c,w,h); el.style.left=p.x+'px'; el.style.top=p.y+'px';
+      el.querySelector('.label').textContent=choices[i];
+      const obj={el, correct:choices[i]===round.q.ans, x:p.x, y:p.y};
       round.mamas.push(obj);
-      // tap to auto-run
-      el.addEventListener('pointerdown', (ev)=>{
-        ev.preventDefault(); if(round.picking) return;
-        seek = {x:p.x, y:p.y, target:obj};
-        el.style.filter='brightness(1.05) drop-shadow(0 3px 6px rgba(0,0,0,.15))';
-        setTimeout(()=> el.style.filter='', 160);
-      });
-    }
-    // Baby fox
-    round.baby = svgBabyFox(); field.appendChild(round.baby);
-    const cx = w/2, cy = Math.min(h/2, h - groundHeight() - (BABY_HALF*scale) - 40);
-    round.baby.style.left = cx+'px'; round.baby.style.top = cy+'px';
-    placeQTag(cx, cy - 70*scale, `${round.q.a} × ${round.q.b}`);
-    round.picking = false;
+      el.addEventListener('pointerdown', ev=>{ev.preventDefault(); if(round.picking) return; seek={x:p.x, y:p.y, target:obj}; el.style.filter='brightness(1.05) drop-shadow(0 3px 6px rgba(0,0,0,.15))'; setTimeout(()=>el.style.filter='',160);});
+    });
 
-    // Snake (re-init each round but keep length growth)
-    initSnake();
+    // Baby fox
+    round.baby=svgBabyFox(); field.appendChild(round.baby);
+    const cx=w/2, cy=Math.min(h/2, h - groundHeight() - (BABY_HALF*scale) - 40);
+    round.baby.style.left=cx+'px'; round.baby.style.top=cy+'px';
+    placeQTag(cx, cy - 70*scale, `${round.q.a} × ${round.q.b}`);
+    round.picking=false;
+
+    // Snakes (start or restart)
+    snakes = [ createSnake(w*0.25, h*0.5, 1, 0, snakeStartLen) ];
+    snakeCooldown = 0; knock=null;
   }
 
   // ---------- Handle pick ----------
-  function onPick(target){
-    if(round.picking) return;
-    round.picking = true;
-    const x=parseFloat(target.el.style.left), y=parseFloat(target.el.style.top);
-    round.baby.style.left = x+'px'; round.baby.style.top = y+'px';
-    placeQTag(x, y - 70*scale, `${round.q.a} × ${round.q.b}`);
-    if(target.correct){
-      chirp(); round.baby.classList.add('hug'); target.el.classList.add('hug');
-      consecCorrect++; updateRing();
-      scale = Math.min(MAX_SCALE, scale * 1.08);
-      hasBeenAboveBaseline = hasBeenAboveBaseline || scale > startScale + 1e-6;
-      round.baby.style.setProperty('--scale', scale);
-      updateSizeBar();
-      if(consecCorrect>=5){
-        consecCorrect = 0; updateRing();
-        if(currentPos > POS_OF_11 && sublevel < 4){
-          sublevel++;
-          toastMsg(`Sublevel ${sublevel} unlocked (${sublevel} mama${sublevel>1?'s':''})`, 1500);
-        }else if(currentPos < ORDER.length-1){
-          currentPos++;
-          highestPos = Math.max(highestPos, currentPos);
-          sublevel = (currentPos > POS_OF_11) ? 1 : 1;
-          const unlocked = ORDER[currentPos];
-          unlockMsg.textContent = `Unlocked ${unlocked}×! Practising it now.`;
-          setTimeout(()=> unlockMsg.textContent = '', 2500);
-          toastMsg(`Unlocked ${unlocked}×!`, 1200);
-        }
-        save(); updateTableHud();
-      }
+  function onPick(t){
+    if(round.picking) return; round.picking=true;
+    round.baby.style.left=t.x+'px'; round.baby.style.top=t.y+'px';
+    placeQTag(t.x, t.y - 70*scale, `${round.q.a} × ${round.q.b}`);
+    if(t.correct){
+      chirp(); round.baby.classList.add('hug'); t.el.classList.add('hug');
+      scale = Math.min(MAX_SCALE, scale*1.06); round.baby.style.setProperty('--scale', scale); updateSizeBar();
       setTimeout(()=>{ seek=null; nextRound(); }, 650);
     }else{
-      squawk(); target.el.classList.add('shake');
-      consecCorrect = 0; updateRing();
-      scale = Math.max(MIN_SCALE, scale * 0.9);
-      round.baby.style.setProperty('--scale', scale);
-      updateSizeBar();
+      squawk(); t.el.classList.add('shake');
+      scale = Math.max(MIN_SCALE, scale*0.92); round.baby.style.setProperty('--scale', scale); updateSizeBar();
       setTimeout(()=>{ seek=null; nextRound(); }, 600);
     }
   }
 
-  // ---------- Snake ----------
-  function initSnake(){
-    snake = [];
-    const w = field.clientWidth, h = field.clientHeight, gh = groundHeight();
-    const start = {x: w*0.2, y: h*0.5};
-    for(let i=0;i<snakeLen;i++){
-      const seg = document.createElement('div'); seg.className='snake-seg'; field.appendChild(seg);
-      snake.push({x:start.x - i*segSpacing, y:start.y, el:seg});
-    }
-    snakeDir = {x: 1, y: 0};
-    snakeTurnTimer = 0;
-    renderSnake();
-  }
-  function renderSnake(){
-    for(const s of snake){ s.el.style.left = s.x+'px'; s.el.style.top = s.y+'px'; }
-  }
-  function growSnake(by=snakeGrowBy){
-    for(let i=0;i<by;i++){
-      const last = snake[snake.length-1];
-      const seg = document.createElement('div'); seg.className='snake-seg'; field.appendChild(seg);
-      snake.push({x:last.x, y:last.y, el:seg});
-    }
-    snakeLen = snake.length;
-  }
-  function updateSnake(){
-    const w = field.clientWidth, h = field.clientHeight, gh = groundHeight();
-    // Randomly change direction a bit
-    if(snakeTurnTimer<=0){
-      snakeTurnTimer = rnd(30, 90);
-      const angle = Math.atan2(snakeDir.y, snakeDir.x) + (Math.random()-0.5)*0.9;
-      snakeDir.x = Math.cos(angle); snakeDir.y = Math.sin(angle);
-    }else{ snakeTurnTimer--; }
-
-    // Head moves
-    const head = snake[0];
-    head.x += snakeDir.x * snakeSpeed;
-    head.y += snakeDir.y * snakeSpeed;
-
-    // Bounce off walls (stay above ground)
-    const margin = 20;
-    const left = margin, right = w - margin, top = margin, bottom = h - gh - margin;
-    if(head.x < left){ head.x = left; snakeDir.x *= -1; }
-    if(head.x > right){ head.x = right; snakeDir.x *= -1; }
-    if(head.y < top){ head.y = top; snakeDir.y *= -1; }
-    if(head.y > bottom){ head.y = bottom; snakeDir.y *= -1; }
-
-    // Follow for body
-    for(let i=snake.length-1;i>0;i--){
-      const a = snake[i], b = snake[i-1];
-      const dx = b.x - a.x, dy = b.y - a.y;
-      const dist = Math.hypot(dx,dy) || 0.0001;
-      const need = segSpacing;
-      if(dist > need){
-        a.x += (dx/dist) * (dist - need);
-        a.y += (dy/dist) * (dist - need);
-      }
-    }
-    renderSnake();
-  }
-
-  function snakeCollisionWithBaby(){
-    if(!round.baby) return false;
-    const bx = parseFloat(round.baby.style.left), by = parseFloat(round.baby.style.top);
-    const br = BABY_HALF * scale * 0.6; // collision radius
-    for(const s of snake){
-      const dx = s.x - bx, dy = s.y - by;
-      const dist = Math.hypot(dx,dy);
-      if(dist < br + 12){ // snake seg radius ~10-12
-        // Grow snake and knock baby back
-        ssslither();
-        growSnake();
-        const mag = Math.hypot(-dx, -dy) || 1;
-        const kx = (-dx / mag) * 1.4; // unit direction away, scaled
-        const ky = (-dy / mag) * 1.4;
-        knock = {vx:kx, vy:ky, frames:22};
-        toastMsg('🐍 Boop! Snake grew longer.' , 800);
-        return true;
+  // ---------- Collisions ----------
+  function trySnakeHit(){
+    if(snakeCooldown>0 || knock) return false; // one-time bounce & grace period
+    const bx=parseFloat(round.baby.style.left), by=parseFloat(round.baby.style.top), br=BABY_HALF*scale*0.6;
+    for(let i=0;i<snakes.length;i++){
+      const sn=snakes[i];
+      for(const sg of sn.segs){
+        const dx=sg.x-bx, dy=sg.y-by, dist=Math.hypot(dx,dy);
+        if(dist < br+12){
+          // one-shot knock directly away from the segment
+          const mag = Math.hypot(-dx,-dy)||1;
+          const kx=(-dx/mag)*1.5, ky=(-dy/mag)*1.5; // stronger, single impulse
+          knock={vx:kx, vy:ky, frames:22};
+          snakeCooldown=28;  // ignore further hits until clear
+          growSnake(sn);     // this snake grows
+          // if it reached 2× original size, split it
+          splitIfNeeded(i);
+          toastMsg('🐍 Boop! Snake grew longer.');
+          return true;
+        }
       }
     }
     return false;
   }
 
-  // ---------- Movement (tilt + fallbacks + seek + knockback) ----------
+  // ---------- Movement loop ----------
   function loop(){
-    const w = field.clientWidth, h = field.clientHeight;
-    const b = round?.baby; if(!b) { requestAnimationFrame(loop); return; }
+    if(!round.baby){ requestAnimationFrame(loop); return; }
+    const w=field.clientWidth, h=field.clientHeight;
 
-    // Update snake first
-    updateSnake();
+    // Update snakes first
+    snakes.forEach(updateSnake);
 
-    // Blend inputs
-    let NX = Math.max(-1, Math.min(1, tiltX + keyX + dragX));
-    let NY = Math.max(-1, Math.min(1, tiltY + keyY + dragY));
+    // Inputs
+    let NX=Math.max(-1,Math.min(1, tiltX+keyX+dragX));
+    let NY=Math.max(-1,Math.min(1, tiltY+keyY+dragY));
 
-    // Knockback overrides everything
-    if(knock && knock.frames>0){
-      NX = knock.vx; NY = knock.vy; knock.frames--;
-      if(knock.frames<=0) knock=null;
-    }
-    // Auto-seek overrides steer (unless knocked)
-    else if(seek){
-      const x = parseFloat(b.style.left), y = parseFloat(b.style.top);
-      const dx = seek.x - x, dy = seek.y - y;
-      const mag = Math.hypot(dx,dy) || 1;
-      NX = Math.max(-1, Math.min(1, dx/mag));
-      NY = Math.max(-1, Math.min(1, dy/mag));
-      if(mag < 64){ onPick(seek.target); requestAnimationFrame(loop); return; }
+    // Single knockback impulse
+    if(knock && knock.frames>0){ NX=knock.vx; NY=knock.vy; knock.frames--; if(knock.frames<=0) knock=null; }
+    else if(seek){ // auto-run to mama
+      const x=parseFloat(round.baby.style.left), y=parseFloat(round.baby.style.top);
+      const dx=seek.x-x, dy=seek.y-y, mag=Math.hypot(dx,dy)||1; NX=dx/mag; NY=dy/mag; if(mag<64){ onPick(seek.target); requestAnimationFrame(loop); return; }
     }
 
-    // Movement
-    const SPEED = 560/60;
-    let x = parseFloat(b.style.left) + NX * SPEED;
-    let y = parseFloat(b.style.top)  + NY * SPEED;
+    // Move baby
+    const SPEED=560/60;
+    let x=parseFloat(round.baby.style.left)+NX*SPEED;
+    let y=parseFloat(round.baby.style.top)+NY*SPEED;
+    const half=BABY_HALF*scale, pad=10, bottom=h-groundHeight()-half-pad, left=half+pad, right=w-half-pad, top=half+pad;
+    if(y>=bottom && NY>0) NY=0;
+    x=clamp(x,left,right); y=clamp(y,top,bottom);
+    round.baby.style.left=x+'px'; round.baby.style.top=y+'px';
+    const q=document.querySelector('.qtag'); if(q){ q.style.left=x+'px'; q.style.top=(y-70*scale)+'px'; }
 
-    // Dynamic bounds with ground
-    const half = BABY_HALF * scale;
-    const pad = 10;
-    const bottomLimit = h - groundHeight() - half - pad;
-    const leftLimit = half + pad;
-    const rightLimit = w - half - pad;
-    const topLimit = half + pad;
+    // Mama proximity = pick
+    for(const m of round.mamas){ const mx=parseFloat(m.el.style.left), my=parseFloat(m.el.style.top); if(Math.hypot(mx-x,my-y)<70){ onPick(m); break; } }
 
-    if(y >= bottomLimit && NY > 0) NY = 0;
-    x = clamp(x, leftLimit, rightLimit);
-    y = clamp(y, topLimit, bottomLimit);
-
-    b.style.left = x+'px'; b.style.top = y+'px';
-    const q = document.querySelector('.qtag'); if(q) { q.style.left = x+'px'; q.style.top = (y - 70*scale)+'px'; }
-
-    // Collision with any mama (manual steering)
-    for(const m of round.mamas){
-      const mx = parseFloat(m.el.style.left), my = parseFloat(m.el.style.top);
-      if(Math.hypot(mx - x, my - y) < 70){ onPick(m); break; }
-    }
-
-    // Collision with snake (causes growth + knockback)
-    snakeCollisionWithBaby();
+    // Snake hit (only once per grace window)
+    trySnakeHit();
+    if(snakeCooldown>0) snakeCooldown--;
 
     requestAnimationFrame(loop);
   }
 
-  // Device orientation (sensitive)
+  // ---------- Tilt / controls ----------
   function initTilt(){
-    function handleOrientation(e){
-      const g = e.gamma || 0; // -90..90 (left/right)
-      const b = e.beta  || 0; // -180..180 (front/back)
-      const dead = 2;
-      const nx = Math.abs(g) < dead ? 0 : Math.max(-1, Math.min(1, g / 20));
-      const ny = Math.abs(b) < dead ? 0 : Math.max(-1, Math.min(1, (b - 0) / 25));
-      tiltX = tiltX*0.7 + nx*0.3;
-      tiltY = tiltY*0.7 + ny*0.3;
+    function handle(e){
+      const g=e.gamma||0, b=e.beta||0, dead=2;
+      const nx=Math.abs(g)<dead?0:Math.max(-1,Math.min(1,g/20));
+      const ny=Math.abs(b)<dead?0:Math.max(-1,Math.min(1,(b-0)/25));
+      tiltX=tiltX*.7+nx*.3; tiltY=tiltY*.7+ny*.3;
     }
-    if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
-      tiltGate.style.display = 'flex';
-      enableTiltBtn.onclick = async ()=>{
-        try{
-          const res = await DeviceOrientationEvent.requestPermission();
-          if(res==='granted'){
-            window.addEventListener('deviceorientation', handleOrientation);
-            tiltGate.style.display='none';
-          }else{
-            tiltGate.style.display='none';
-          }
-        }catch(e){ tiltGate.style.display='none'; }
-      };
-    }else if(typeof DeviceOrientationEvent !== 'undefined'){
-      window.addEventListener('deviceorientation', handleOrientation);
-    }
+    if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
+      tiltGate.style.display='flex';
+      enableTiltBtn.onclick=async()=>{ try{ const r=await DeviceOrientationEvent.requestPermission(); if(r==='granted') window.addEventListener('deviceorientation',handle); }finally{ tiltGate.style.display='none'; } };
+    }else if(typeof DeviceOrientationEvent!=='undefined'){ window.addEventListener('deviceorientation',handle); }
   }
+  document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft')keyX=-1; if(e.key==='ArrowRight')keyX=1; if(e.key==='ArrowUp')keyY=-1; if(e.key==='ArrowDown')keyY=1; });
+  document.addEventListener('keyup',e=>{ if(['ArrowLeft','ArrowRight'].includes(e.key))keyX=0; if(['ArrowUp','ArrowDown'].includes(e.key))keyY=0; });
+  field.addEventListener('touchstart',()=>{dragging=true;},{passive:true});
+  field.addEventListener('touchend',()=>{dragging=false;dragX=0;dragY=0;},{passive:true});
+  field.addEventListener('touchmove',e=>{ if(!dragging) return; const t=e.touches[0], r=field.getBoundingClientRect();
+    const cx=parseFloat(round.baby.style.left), cy=parseFloat(round.baby.style.top);
+    const tx=t.clientX-r.left, ty=t.clientY-r.top, dx=tx-cx, dy=ty-cy, m=Math.hypot(dx,dy)||1; dragX=dx/m; dragY=dy/m; }, {passive:true});
+  field.addEventListener('mousemove',e=>{ if(!e.buttons){dragX=0;dragY=0;return;} const r=field.getBoundingClientRect();
+    const cx=parseFloat(round.baby.style.left), cy=parseFloat(round.baby.style.top);
+    const tx=e.clientX-r.left, ty=e.clientY-r.top, dx=tx-cx, dy=ty-cy, m=Math.hypot(dx,dy)||1; dragX=dx/m; dragY=dy/m; });
 
-  // Keyboard fallback
-  document.addEventListener('keydown', e=>{
-    if(e.key==='ArrowLeft')  keyX=-1;
-    if(e.key==='ArrowRight') keyX= 1;
-    if(e.key==='ArrowUp')    keyY=-1;
-    if(e.key==='ArrowDown')  keyY= 1;
-  });
-  document.addEventListener('keyup', e=>{
-    if(['ArrowLeft','ArrowRight'].includes(e.key)) keyX=0;
-    if(['ArrowUp','ArrowDown'].includes(e.key)) keyY=0;
-  });
-
-  // Drag fallback (touch/desktop)
-  field.addEventListener('touchstart', e=>{ dragging=true; }, {passive:true});
-  field.addEventListener('touchend', ()=>{ dragging=false; dragX=0; dragY=0; }, {passive:true});
-  field.addEventListener('touchmove', e=>{
-    if(!dragging) return;
-    const t = e.touches[0];
-    const rect = field.getBoundingClientRect();
-    const cx = parseFloat(round.baby.style.left);
-    const cy = parseFloat(round.baby.style.top);
-    const targetX = t.clientX - rect.left;
-    const targetY = t.clientY - rect.top;
-    const dx = targetX - cx, dy = targetY - cy;
-    const mag = Math.hypot(dx,dy) || 1;
-    dragX = (dx / mag);
-    dragY = (dy / mag);
-  }, {passive:true});
-  field.addEventListener('mousemove', e=>{
-    if(!e.buttons) { dragX=0; dragY=0; return; }
-    const rect = field.getBoundingClientRect();
-    const cx = parseFloat(round.baby.style.left);
-    const cy = parseFloat(round.baby.style.top);
-    const targetX = e.clientX - rect.left;
-    const targetY = e.clientY - rect.top;
-    const dx = targetX - cx, dy = targetY - cy;
-    const mag = Math.hypot(dx,dy) || 1;
-    dragX = (dx / mag);
-    dragY = (dy / mag);
-  });
-
-  // ---------- Storage ----------
-  function save(){ try{
-    localStorage.setItem(KEY, JSON.stringify({ currentPos, highestPos, consecCorrect, sublevel, scale, snakeLen }));
+  // ---------- Save/Load ----------
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ currentPos, highestPos, sublevel, scale, snakeStartLen })); }catch(e){} }
+  function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)||'{}');
+    currentPos=d.currentPos??0; highestPos=d.highestPos??0; sublevel=d.sublevel??1; scale=Math.min(MAX_SCALE, d.scale??startScale); snakeStartLen=Math.max(SNAKE_START_LEN, d.snakeStartLen??SNAKE_START_LEN);
   }catch(e){} }
-  function load(){
-    try{
-      const raw = localStorage.getItem(KEY);
-      if(raw){
-        const d = JSON.parse(raw);
-        currentPos = Math.max(0, Math.min(ORDER.length-1, d.currentPos ?? currentPos));
-        highestPos = Math.max(0, Math.min(ORDER.length-1, d.highestPos ?? highestPos));
-        consecCorrect = d.consecCorrect ?? 0;
-        sublevel = d.sublevel ?? 1;
-        scale = Math.min(MAX_SCALE, d.scale ?? startScale);
-        snakeLen = Math.max(8, Math.min(160, d.snakeLen ?? snakeLen));
-      }
-    }catch(e){}
-  }
 
-  // ---------- Game flow ----------
-  function hardReset(){
-    currentPos = 0; highestPos = 0; consecCorrect = 0; sublevel = 1;
-    scale = startScale; hasBeenAboveBaseline = false; snakeLen = 12;
-    updateRing(); updateSizeBar(); updateTableHud(); save();
-    nextRound();
-  }
-
-  // Buttons
-  $('#play').onclick=()=>{
-    document.body.classList.add('fullscreen');
-    load(); updateTableHud(); updateRing(); updateSizeBar();
-    initTilt();
-    nextRound();
-    loop();
-  };
+  // ---------- Reset & buttons ----------
+  function hardReset(){ currentPos=0; highestPos=0; sublevel=1; scale=startScale; snakeStartLen=SNAKE_START_LEN; updateSizeBar(); updateTableHud(); save(); nextRound(); }
+  $('#play').onclick=()=>{ document.body.classList.add('fullscreen'); load(); updateTableHud(); updateSizeBar(); initTilt(); nextRound(); loop(); };
   $('#reset').onclick=()=>{ hardReset(); toastMsg('Reset'); };
-  $('#clear').onclick=()=>{
-    try{ localStorage.removeItem(KEY); }catch(e){}
-    hardReset();
-    toastMsg('Progress cleared', 1000);
-  };
-  $('#mute').onclick=()=>{ soundOn=!soundOn; $('#mute').textContent = soundOn? '🔊 Sound':'🔇 Muted'; };
-  $('#exitFS').onclick=()=>{
-    document.body.classList.remove('fullscreen');
-    clearSprites(); if(qTag){ qTag.remove(); qTag=null; }
-  };
+  $('#clear').onclick=()=>{ try{localStorage.removeItem(KEY);}catch(e){} hardReset(); toastMsg('Progress cleared'); };
+  $('#mute').onclick=()=>{ soundOn=!soundOn; $('#mute').textContent= soundOn? '🔊 Sound':'🔇 Muted'; };
+  $('#exitFS').onclick=()=>{ document.body.classList.remove('fullscreen'); clearSprites(); if(qTag){qTag.remove(); qTag=null;} };
 
   // Boot
-  updateTableHud(); updateRing(); updateSizeBar();
+  updateTableHud(); updateSizeBar();
 })();
 </script>
 </body>
