@@ -77,9 +77,9 @@
   <section class="card fsHide">
     <div style="font-weight:800">What’s new</div>
     <ul style="margin:8px 0 0 22px">
-      <li>One-time **bounce** away from the snake (with a short safety window).</li>
-      <li>When a snake grows to **2×** its original length, it **splits into two** smaller snakes.</li>
-      <li>Mama foxes stay at the **corners**; tap a mama to auto-run to her. Tilt / drag / arrows all work.</li>
+      <li>Baby fox starts **2× smaller** (and never bigger than moms).</li>
+      <li>Even after **5 in a row**, the game **stays on the same table** (no auto-advance).</li>
+      <li>One-time snake knockback + grace period; big snakes split into two.</li>
     </ul>
     <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
       <button class="btn" id="play">Play ▶</button>
@@ -112,13 +112,16 @@
   const ORDER = [2,3,1,10,5,11,4,6,7,8,9,12];
   const POS_OF_11 = ORDER.indexOf(11);
 
-  const KEY = 'foxSnakeSplit:v1';
+  const KEY = 'foxSnakeSplit:v2';
   let currentPos = 0, highestPos = 0, sublevel = 1;
   let soundOn = true;
 
-  // Sizes
+  // Streak counter (for your “5 correct” rule)
+  let streak = 0;
+
+  // Sizes (baby is 2× smaller by starting at 0.5)
   const BABY_HALF = 60, MAMA_HALF = 74;
-  const startScale = 1, MAX_SCALE = 1.18, MIN_SCALE = 0.5;
+  const startScale = 0.5, MAX_SCALE = 0.8, MIN_SCALE = 0.4;
   let scale = startScale;
 
   // Motion
@@ -184,8 +187,10 @@
   // ---------- HUD ----------
   function updateSizeBar(){ sizeBar.style.width = ((scale-MIN_SCALE)/(MAX_SCALE-MIN_SCALE))*100 + '%'; }
   function updateTableHud(){
-    const now=ORDER[currentPos], next=ORDER[currentPos+1]??ORDER[currentPos];
-    $('#tblNow').textContent=now; $('#tblHint').textContent = currentPos<ORDER.length-1 ? `(next: ${next}× after 5 hugs)` : '(all done)';
+    const now=ORDER[currentPos];
+    $('#tblNow').textContent=now;
+    // Explicit message: no auto-advance
+    $('#tblHint').textContent = '(stay on this table — no auto-advance)';
   }
 
   // ---------- Questions ----------
@@ -210,6 +215,7 @@
   }
 
   // ---------- Snakes helpers ----------
+  const segSpacing = 18;
   function removeSnakeFromDOM(sn){ sn.segs.forEach(s=>s.el.remove()); }
   function createSnake(x,y,dirX,dirY,len){
     const segs=[];
@@ -217,7 +223,7 @@
       const d=document.createElement('div'); d.className='snake-seg'; field.appendChild(d);
       segs.push({x:x - dirX*i*segSpacing, y:y - dirY*i*segSpacing, el:d});
     }
-    return {segs, dir:{x:dirX,y:dirY}, turn:rnd(30,90), speed:SNAKE_SPEED};
+    return {segs, dir:{x:dirX,y:dirY}, turn:rnd(30,90), speed:2.2};
   }
   function renderSnake(sn){ for(const s of sn.segs){ s.el.style.left=s.x+'px'; s.el.style.top=s.y+'px'; } }
   function updateSnake(sn){
@@ -234,14 +240,13 @@
     }
     renderSnake(sn);
   }
-  function growSnake(sn, by=GROW_BY){
+  function growSnake(sn, by=6){
     for(let i=0;i<by;i++){ const last=sn.segs[sn.segs.length-1]; const d=document.createElement('div'); d.className='snake-seg'; field.appendChild(d); sn.segs.push({x:last.x,y:last.y,el:d}); }
   }
   function totalLen(sn){ return sn.segs.length; }
   function splitIfNeeded(snIndex){
     const sn = snakes[snIndex];
     if(totalLen(sn) < 2*snakeStartLen) return;
-    // Make two snakes of half the current length (≈ original size)
     const half = Math.max(8, Math.floor(totalLen(sn)/2));
     const head = sn.segs[0];
     const ang = Math.atan2(sn.dir.y, sn.dir.x);
@@ -249,7 +254,7 @@
     const s2 = createSnake(head.x, head.y, Math.cos(ang-0.7), Math.sin(ang-0.7), half);
     removeSnakeFromDOM(sn);
     snakes.splice(snIndex, 1, s1, s2);
-    snakeStartLen = Math.max(SNAKE_START_LEN, half); // update baseline for future rounds
+    snakeStartLen = Math.max(12, half);
     toastMsg('🐍 The big snake split into two!');
   }
 
@@ -273,8 +278,9 @@
       el.addEventListener('pointerdown', ev=>{ev.preventDefault(); if(round.picking) return; seek={x:p.x, y:p.y, target:obj}; el.style.filter='brightness(1.05) drop-shadow(0 3px 6px rgba(0,0,0,.15))'; setTimeout(()=>el.style.filter='',160);});
     });
 
-    // Baby fox
+    // Baby fox (smaller)
     round.baby=svgBabyFox(); field.appendChild(round.baby);
+    round.baby.style.setProperty('--scale', scale);
     const cx=w/2, cy=Math.min(h/2, h - groundHeight() - (BABY_HALF*scale) - 40);
     round.baby.style.left=cx+'px'; round.baby.style.top=cy+'px';
     placeQTag(cx, cy - 70*scale, `${round.q.a} × ${round.q.b}`);
@@ -292,11 +298,14 @@
     placeQTag(t.x, t.y - 70*scale, `${round.q.a} × ${round.q.b}`);
     if(t.correct){
       chirp(); round.baby.classList.add('hug'); t.el.classList.add('hug');
-      scale = Math.min(MAX_SCALE, scale*1.06); round.baby.style.setProperty('--scale', scale); updateSizeBar();
+      streak++; // count, but do NOT change timetable
+      if(streak>=5){ toastMsg('🎉 5 in a row! Keep practising this table.'); }
+      scale = Math.min(MAX_SCALE, scale*1.04); round.baby.style.setProperty('--scale', scale); updateSizeBar();
       setTimeout(()=>{ seek=null; nextRound(); }, 650);
     }else{
       squawk(); t.el.classList.add('shake');
-      scale = Math.max(MIN_SCALE, scale*0.92); round.baby.style.setProperty('--scale', scale); updateSizeBar();
+      streak = 0; // reset streak on wrong
+      scale = Math.max(MIN_SCALE, scale*0.94); round.baby.style.setProperty('--scale', scale); updateSizeBar();
       setTimeout(()=>{ seek=null; nextRound(); }, 600);
     }
   }
@@ -310,13 +319,11 @@
       for(const sg of sn.segs){
         const dx=sg.x-bx, dy=sg.y-by, dist=Math.hypot(dx,dy);
         if(dist < br+12){
-          // one-shot knock directly away from the segment
           const mag = Math.hypot(-dx,-dy)||1;
-          const kx=(-dx/mag)*1.5, ky=(-dy/mag)*1.5; // stronger, single impulse
+          const kx=(-dx/mag)*1.5, ky=(-dy/mag)*1.5; // single impulse away
           knock={vx:kx, vy:ky, frames:22};
-          snakeCooldown=28;  // ignore further hits until clear
-          growSnake(sn);     // this snake grows
-          // if it reached 2× original size, split it
+          snakeCooldown=28;  // ignore further hits briefly
+          growSnake(sn);
           splitIfNeeded(i);
           toastMsg('🐍 Boop! Snake grew longer.');
           return true;
@@ -396,7 +403,7 @@
   }catch(e){} }
 
   // ---------- Reset & buttons ----------
-  function hardReset(){ currentPos=0; highestPos=0; sublevel=1; scale=startScale; snakeStartLen=SNAKE_START_LEN; updateSizeBar(); updateTableHud(); save(); nextRound(); }
+  function hardReset(){ currentPos=0; highestPos=0; sublevel=1; scale=startScale; snakeStartLen=SNAKE_START_LEN; streak=0; updateSizeBar(); updateTableHud(); save(); nextRound(); }
   $('#play').onclick=()=>{ document.body.classList.add('fullscreen'); load(); updateTableHud(); updateSizeBar(); initTilt(); nextRound(); loop(); };
   $('#reset').onclick=()=>{ hardReset(); toastMsg('Reset'); };
   $('#clear').onclick=()=>{ try{localStorage.removeItem(KEY);}catch(e){} hardReset(); toastMsg('Progress cleared'); };
